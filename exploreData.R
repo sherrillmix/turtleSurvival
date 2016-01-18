@@ -44,5 +44,3 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
 }
 dev.off()
 
-info$hook<-ifelse(grepl('Deep',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Deep',ifelse(grepl('Light',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Light','NoHook'))
-info$hook[info$Lightly.or.Deeply.Hooked..based.on.pics.=='Unknown']<-NA

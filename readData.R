@@ -168,5 +168,7 @@ info$realRelease<-sapply(info$ptt,function(x,surfaceDepth=10){
 info$lastDay<-info$realRelease
 info[info$fate=='StillOn','lastDay']<-sapply(info[info$fate=='StillOn','ptt'],function(x)max(c(0,minMaxDepth[minMaxDepth$Ptt==x,'deployDay'])))
 
+info$hook<-ifelse(grepl('Deep',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Deep',ifelse(grepl('Light',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Light','NoHook'))
+info$hook[info$Lightly.or.Deeply.Hooked..based.on.pics.=='Unknown']<-NA
 
 
