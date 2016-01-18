@@ -69,12 +69,29 @@ minMaxDepth$noDive<-minMaxDepth$max<surfaceDepth
 minMaxDepth<-minMaxDepth[order(minMaxDepth$Ptt,minMaxDepth$rDate),]
 belowSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x){
   belows<-binary2range(!x$surface&x$deployDay> -10)
+  if(nrow(belows)>0){
+    belows<-do.call(rbind,apply(belows,1,function(y){
+      #if 2 days of no data then split
+      bigDiffs<-which(diff(x$deployDay[y[1]:y[2]])>2)
+      out<-data.frame('start'=c(y[1],bigDiffs+y[1]),'end'=c(bigDiffs+y[1]-1,y[2]))
+      return(out)
+    }))
+  }
   belows$start<-x[belows$start,'deployDay']
   belows$end<-x[belows$end,'deployDay']
+  belows<-belows[belows$end-belows$start>2,]
   return(belows)
 })
 onSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x){
   noDives<-binary2range(x$noDive&x$deployDay> -10)
+  if(nrow(noDives)>0){
+    noDives<-do.call(rbind,apply(noDives,1,function(y){
+      #if 2 days of no data then split
+      bigDiffs<-which(diff(x$deployDay[y[1]:y[2]])>2)
+      out<-data.frame('start'=c(y[1],bigDiffs+y[1]),'end'=c(bigDiffs+y[1]-1,y[2]))
+      return(out)
+    }))
+  }
   noDives$start<-x[noDives$start,'deployDay']
   noDives$end<-x[noDives$end,'deployDay']
   noDives<-noDives[noDives$end-noDives$start>2,]
