@@ -2,6 +2,7 @@ library('lubridate')
 
 info<-read.csv('Caretta_Hooked_Table_2011-2015.csv',stringsAsFactors=FALSE)
 info$deployDate<-parse_date_time(info$Deployment.Date..yyyy.mm.dd.,'mdy')
+rownames(info)<-info$PTTID
 deployDates<-info$deployDate
 names(deployDates)<-info$PTTID
 
@@ -24,6 +25,9 @@ calcDeployDay<-function(animals,rdate,deployDates){
 tagData<-readWild('processed/PAT Data-Summary.csv')
 statusData<-readWild('processed/PAT Data-Status.csv')
 statusData$rReleaseTime<-parse_date_time(statusData$ReleaseTime,'%H:%M:%S %d-%b-%y')
+#remove status data with crazy release dates prior to deployment
+statusData<-statusData[statusData$rReleaseTime > deployDates[as.character(statusData$Ptt)]|is.na(statusData$rReleaseTime),]
+
 releaseDates<-unlist(by(statusData,statusData$Ptt,function(x){
   tab<-sort(table(x$ReleaseTime[!is.na(x$rReleaseTime)]))
   if(length(tab)==0)return(NA)
@@ -62,6 +66,7 @@ minMaxDepth$max<-minMaxDepth$MaxDepth
 minMaxDepth[minMaxDepth$min<=24 & minMaxDepth$MinSource=='LightLoc','min']<-0
 minMaxDepth[minMaxDepth$min<=24 & minMaxDepth$MinSource=='PDT','min']<-0
 minMaxDepth[minMaxDepth$max<=16 &!is.na(minMaxDepth$max)&!is.na(minMaxDepth$MaxSource) & minMaxDepth$MaxSource=='LightLoc','max']<-0
+minMaxDepth[minMaxDepth$max<=24 &!is.na(minMaxDepth$max)&!is.na(minMaxDepth$MaxSource) & minMaxDepth$MaxSource=='PDT','max']<-0
 surfaceDepth<-10
 #minMaxDepth[minMaxDepth$min<surfaceDepth&!is.na(minMaxDepth$min),'min']<-0
 minMaxDepth$surface<-minMaxDepth$min<surfaceDepth
@@ -113,6 +118,27 @@ statusData$minDepth<-0
 statusData$maxDepth<-NA
 statusData$source<-'status'
 
+#need to add more. not sure worth it
 depthCols<-c('rDate','minDepth','maxDepth','source')
 allDepths<-rbind(divePdt[,depthCols],pdt[,depthCols],statusData[,depthCols])
+
+
+releaseTypes<-unlist(by(statusData,statusData$Ptt,function(x){
+  tab<-sort(table(x$ReleaseType[!is.na(x$rReleaseTime)&x$ReleaseType!='']))
+  if(length(tab)==0)return(NA)
+  if(tail(tab,1)/sum(tab)<.7)warning(sprintf('Ambiguous release time in PTT %s',x[1,'Ptt']))
+  return(tail(names(tab),1))
+}))
+info$releaseType<-releaseTypes[as.character(info$PTTID)]
+
+info$fate<-NA
+#scheduled release 
+info$fate[info$releaseType=='Scheduled']<-'Scheduled'
+#labeled too deeps (misses some)
+info$fate[info$releaseType=='Too Deep']<-'Sink'
+#labeled floaters (misses some)
+info$fate[info$releaseType=='Floater']<-'Float'
+#still on turtle?
+info$fate[is.na(info$releaseType)]<-'StillOn'
+
 

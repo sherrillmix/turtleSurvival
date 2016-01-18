@@ -1,6 +1,6 @@
 source('~/scripts/R/dna.R')
 if(!exists('tagData'))source('readData.R')
-statusCols<-c('HauledOut', 'BrokenThermistor', 'BrokenLink', 'NoDawnDusk', 'ReleaseType', 'InitiallyBroken', 'BurnMinutes', 'FastGPSPower', 'TWICPower', 'PowerLimit', 'WetDry', 'StatusWord', 'Resets', 'PreReleaseTilt', 'PreReleaseTiltSd', 'PreReleaseTiltCount', 'XmitQueue', 'FastGPSLocNumber', 'FastGPSFailures', 'BattDiscon')
+statusCols<-c('BrokenThermistor', 'BrokenLink', 'NoDawnDusk', 'ReleaseType', 'InitiallyBroken', 'FastGPSPower', 'TWICPower', 'PowerLimit', 'WetDry', 'Resets', 'PreReleaseTilt', 'PreReleaseTiltSd', 'PreReleaseTiltCount', 'XmitQueue', 'FastGPSLocNumber', 'FastGPSFailures', 'BattDiscon')
 pdf('out/minMaxDepth.pdf')
 for(ii in unique(minMaxDepth$Ptt)){
   thisData<-minMaxDepth[minMaxDepth$DeployID==ii&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-100,]
@@ -10,13 +10,14 @@ for(ii in unique(minMaxDepth$Ptt)){
   thisSurface<-onSurface[[as.character(ii)]]
   thisInfo<-info[info$PTTID==ii,]
   xlim<-range(thisData$deployDay)
-  ylim<-range(c(thisData$MinDepth,thisData$MaxDepth))
+  ylim<-range(c(0,thisData$MinDepth,thisData$MaxDepth))
   plot(1,1,type='n',main=ii,xlim=xlim+c(-.2,.2)*diff(xlim),ylim=rev(ylim),xlab='Deploy day',ylab='Minimum depth')
   lines(thisData$deployDay,thisData$MinDepth,col='gray')
   points(thisData$deployDay,thisData$min)
   lines(thisData$deployDay,thisData$min)
   if(nrow(thisBelow)>0)segments(thisBelow$start,0,thisBelow$end,0,lwd=4,col='#FF000033')
   abline(v=thisInfo$releaseDays,col='#0000FF77',lty=2)
+  mtext(ifelse(is.na(thisInfo$fate),'Unknown',thisInfo$fate),1,line=-2,cex=3)
   plot(1,1,type='n',main=ii,xlim=xlim+c(-.2,.2)*diff(xlim),ylim=rev(ylim),xlab='Deploy day',ylab='Maximum depth')
   lines(thisData$deployDay,thisData$MaxDepth,col='gray')
   lines(thisData$deployDay,thisData$max)
