@@ -2,9 +2,10 @@ library('lubridate')
 
 info<-read.csv('Caretta_Hooked_Table_2011-2015.csv',stringsAsFactors=FALSE)
 info$deployDate<-parse_date_time(info$Deployment.Date..yyyy.mm.dd.,'mdy')
-rownames(info)<-info$PTTID
+info$ptt<-as.character(info$PTTID)
+rownames(info)<-info$ptt
 deployDates<-info$deployDate
-names(deployDates)<-info$PTTID
+names(deployDates)<-info$ptt
 
 readWild<-function(x,...){
   tagData<-readLines(x)
@@ -44,19 +45,19 @@ pdt$minDepth<-apply(pdt[,depthColumns],1,min,na.rm=TRUE)
 pdt$source<-'pdt'
 
 
-info$releaseDate<-parse_date_time(sapply(info$PTTID,function(x)releaseDates[as.character(x)]),'%H:%M:%S %d-%b-%y')
+info$releaseDate<-parse_date_time(sapply(info$ptt,function(x)releaseDates[as.character(x)]),'%H:%M:%S %d-%b-%y')
 info$releaseDays<-(as.numeric(info$releaseDate)-as.numeric(info$deployDate))/24/60/60
 
 minMaxDepth<-readWild('processed/PAT Data-MinMaxDepth.csv')
 
-if(any(!info$PTTID %in% tagData$DeployID))warning('Missing tag ',paste(info[!info$PTTID %in% tagData$DeployID,'PTTID'],collapse=''))
-missingInfo<-tagData[!tagData$DeployID %in% info$PTTID,]
+if(any(!info$ptt %in% tagData$DeployID))warning('Missing tag ',paste(info[!info$ptt %in% tagData$DeployID,'ptt'],collapse=''))
+missingInfo<-tagData[!tagData$DeployID %in% info$ptt,]
 write.csv(missingInfo[,c('Ptt','Instr','ReleaseType')],'out/missingTags.csv',row.names=FALSE)
 table(tagData$ReleaseType)
 
-tagData<-tagData[tagData$DeployID %in% info$PTTID,]
-statusData<-statusData[statusData$DeployID %in% info$PTTID,]
-minMaxDepth<-minMaxDepth[minMaxDepth$DeployID %in% info$PTTID,]
+tagData<-tagData[tagData$DeployID %in% info$ptt,]
+statusData<-statusData[statusData$DeployID %in% info$ptt,]
+minMaxDepth<-minMaxDepth[minMaxDepth$DeployID %in% info$ptt,]
 
 statusData$deployDay<-calcDeployDay(statusData$Ptt,statusData$rDate,deployDates)
 minMaxDepth$deployDay<-calcDeployDay(minMaxDepth$Ptt,minMaxDepth$rDate,deployDates)
@@ -129,16 +130,34 @@ releaseTypes<-unlist(by(statusData,statusData$Ptt,function(x){
   if(tail(tab,1)/sum(tab)<.7)warning(sprintf('Ambiguous release time in PTT %s',x[1,'Ptt']))
   return(tail(names(tab),1))
 }))
-info$releaseType<-releaseTypes[as.character(info$PTTID)]
+info$releaseType<-releaseTypes[info$ptt]
 
 info$fate<-NA
 #scheduled release 
 info$fate[info$releaseType=='Scheduled']<-'Scheduled'
 #labeled too deeps (misses some)
-info$fate[info$releaseType=='Too Deep']<-'Sink'
+info$fate[info$releaseType=='Too Deep']<-'TooDeep'
 #labeled floaters (misses some)
 info$fate[info$releaseType=='Floater']<-'Float'
 #still on turtle?
 info$fate[is.na(info$releaseType)]<-'StillOn'
+#no surface before release
+info$fate[is.na(info$fate)]<-sapply(info$ptt[is.na(info$fate)],function(x){
+  thisRelease<-info[x,'releaseDays']
+  thisBelow<-belowSurface[[as.character(x)]]
+  thisBelow<-thisBelow[thisBelow$end>thisRelease-2&thisBelow$start<thisRelease,]
+  thisSurface<-onSurface[[as.character(x)]]
+  thisSurface<-thisSurface[thisSurface$end>thisRelease-2&thisSurface$start<thisRelease,]
+  thisDepths<-minMaxDepth[minMaxDepth$Ptt==x & minMaxDepth$deployDay<thisRelease & minMaxDepth$deployDay>thisRelease-20 &!is.na(minMaxDepth$max),'max']
+  thisDepths<-rev(thisDepths)
+  #depth <1000 and all following depths at surface
+  if(any(thisDepths>1000)&&all(head(thisDepths,min(which(thisDepths>1000))-1)<surfaceDepth))return('TooDeep')
+  if(nrow(thisSurface)==0&nrow(thisBelow)==0)return(NA)
+  if(nrow(thisSurface)>0&nrow(thisBelow)>0)stop(simpleError('Both float and sink'))
+  if(nrow(thisSurface)>0)return('Float')
+  if(nrow(thisBelow)>0)return('ConstantDepth')
+})
+  
+
 
 

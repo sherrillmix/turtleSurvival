@@ -2,13 +2,17 @@ source('~/scripts/R/dna.R')
 if(!exists('tagData'))source('readData.R')
 statusCols<-c('BrokenThermistor', 'BrokenLink', 'NoDawnDusk', 'ReleaseType', 'InitiallyBroken', 'FastGPSPower', 'TWICPower', 'PowerLimit', 'WetDry', 'Resets', 'PreReleaseTilt', 'PreReleaseTiltSd', 'PreReleaseTiltCount', 'XmitQueue', 'FastGPSLocNumber', 'FastGPSFailures', 'BattDiscon')
 pdf('out/minMaxDepth.pdf')
-for(ii in unique(minMaxDepth$Ptt)){
-  thisData<-minMaxDepth[minMaxDepth$DeployID==ii&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-100,]
-  thisStatus<-statusData[statusData$Ptt==ii,]
+for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
+  thisData<-minMaxDepth[minMaxDepth$Ptt==as.numeric(ii)&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-100,]
+  if(nrow(thisData)==0){
+    warning('No data for ',ii)
+    next
+  }
+  thisStatus<-statusData[statusData$Ptt==as.numeric(ii),]
   thisStatus<-thisStatus[apply(thisStatus[,statusCols],1,function(x)any(!is.na(x)&x!=''&x!=0)),]
   thisBelow<-belowSurface[[as.character(ii)]]
   thisSurface<-onSurface[[as.character(ii)]]
-  thisInfo<-info[info$PTTID==ii,]
+  thisInfo<-info[info$ptt==ii,]
   xlim<-range(thisData$deployDay)
   ylim<-range(c(0,thisData$MinDepth,thisData$MaxDepth))
   plot(1,1,type='n',main=ii,xlim=xlim+c(-.2,.2)*diff(xlim),ylim=rev(ylim),xlab='Deploy day',ylab='Minimum depth')
