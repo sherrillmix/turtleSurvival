@@ -1,0 +1,23 @@
+library(survival)
+source("~/scripts/R/dna.R")
+
+if(!exists('tagData'))source('readData.R')
+info$hookFac<-factor(info$hook)
+surv<-Surv(info$lastDay,info$fate %in% c('TooDeep','ConstantDepth'))
+survFloatDead<-Surv(info$lastDay,info$fate %in% c('TooDeep','ConstantDepth','Float'))
+km<-survfit(surv~1,conf.type='log-log')
+kmFloat<-survfit(survFloatDead~1,conf.type='log-log')
+kmHook<-survfit(surv~hookFac,conf.type='log-log',data=info)
+kmHookFloat<-survfit(survFloatDead~hookFac,conf.type='log-log',data=info)
+
+
+hookColor<-rainbow.lab(length(unique(info$hook)),lightScale=0,lightMultiple=.7,alpha=1)
+names(hookColor)<-levels(info$hookFac)
+pdf('out/kmCurve.pdf')
+  plot(km,xlab='Days after tagging',ylab='Proportion surviving')
+  plot(kmHook,xlab='Days after tagging',ylab='Proportion surviving',col=hookColor,lwd=2)
+  legend('bottomright',levels(info$hookFac),col=hookColor,lwd=1,bty='n')
+  plot(kmFloat,xlab='Days after tagging',ylab='Proportion surviving (float=death)')
+  plot(kmHookFloat,xlab='Days after tagging',ylab='Proportion surviving (float=death)',col=hookColor,lwd=2)
+  legend('topright',levels(info$hookFac),col=hookColor,lwd=2,bty='n')
+dev.off()

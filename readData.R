@@ -141,7 +141,7 @@ info$fate[info$releaseType=='Too Deep']<-'TooDeep'
 info$fate[info$releaseType=='Floater']<-'Float'
 #still on turtle?
 info$fate[is.na(info$releaseType)]<-'StillOn'
-#no surface before release
+#too deep or float or no surface
 info$fate[is.na(info$fate)]<-sapply(info$ptt[is.na(info$fate)],function(x,surfaceDepth=10){
   thisRelease<-info[x,'releaseDays']
   thisBelow<-belowSurface[[as.character(x)]]
@@ -157,12 +157,16 @@ info$fate[is.na(info$fate)]<-sapply(info$ptt[is.na(info$fate)],function(x,surfac
   if(nrow(thisSurface)>0)return('Float')
   if(nrow(thisBelow)>0)return('ConstantDepth')
 },surfaceDepth)
+#unknown
+info$fate[is.na(info$fate)]<-'Unknown'
   
 info$realRelease<-sapply(info$ptt,function(x,surfaceDepth=10){
   thisRelease<-info[x,'releaseDays']
   thisDepths<-minMaxDepth[minMaxDepth$Ptt==x & minMaxDepth$deployDay<thisRelease & minMaxDepth$deployDay>thisRelease-20 &!is.na(minMaxDepth$max),c('deployDay','max')]
   thisDepths[max(c(1,which(thisDepths$max>surfaceDepth))),'deployDay']
 },surfaceDepth)
+info$lastDay<-info$realRelease
+info[info$fate=='StillOn','lastDay']<-sapply(info[info$fate=='StillOn','ptt'],function(x)max(c(0,minMaxDepth[minMaxDepth$Ptt==x,'deployDay'])))
 
 
 
