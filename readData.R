@@ -31,7 +31,14 @@ releaseDates<-unlist(by(statusData,statusData$Ptt,function(x){
   return(tail(names(tab),1))
 }))
 pdt<-readWild('processed/PAT Data-PDTs.csv')
-pdt<-pdt[pdt$BrokenThermistor!=0&is.na(pdt$Partial),]
+pdt<-pdt[is.na(pdt$Partial),]
+depthColumns<-colnames(pdt)[grep('^Depth',colnames(pdt))]
+goodRows<-apply(pdt[,depthColumns],1,function(x)any(!is.na(x)))
+pdt<-pdt[goodRows,]
+pdt$maxDepth<-apply(pdt[,depthColumns],1,max,na.rm=TRUE)
+pdt$minDepth<-apply(pdt[,depthColumns],1,min,na.rm=TRUE)
+pdt$source<-'pdt'
+
 
 info$releaseDate<-parse_date_time(sapply(info$PTTID,function(x)releaseDates[as.character(x)]),'%H:%M:%S %d-%b-%y')
 info$releaseDays<-(as.numeric(info$releaseDate)-as.numeric(info$deployDate))/24/60/60
@@ -50,11 +57,29 @@ minMaxDepth<-minMaxDepth[minMaxDepth$DeployID %in% info$PTTID,]
 statusData$deployDay<-calcDeployDay(statusData$Ptt,statusData$rDate,deployDates)
 minMaxDepth$deployDay<-calcDeployDay(minMaxDepth$Ptt,minMaxDepth$rDate,deployDates)
 minMaxDepth$min<-minMaxDepth$MinDepth
-surfaceDepth<-20
-minMaxDepth[minMaxDepth$min<surfaceDepth&!is.na(minMaxDepth$min),'min']<-0
-minMaxDepth$surface<-minMaxDepth$min<1
+minMaxDepth$max<-minMaxDepth$MaxDepth
+#these two seem to have 16 or 24 meter resolution so compress it all to 0
+minMaxDepth[minMaxDepth$min<=24 & minMaxDepth$MinSource=='LightLoc','min']<-0
+minMaxDepth[minMaxDepth$min<=24 & minMaxDepth$MinSource=='PDT','min']<-0
+minMaxDepth[minMaxDepth$max<=16 &!is.na(minMaxDepth$max)&!is.na(minMaxDepth$MaxSource) & minMaxDepth$MaxSource=='LightLoc','max']<-0
+surfaceDepth<-10
+#minMaxDepth[minMaxDepth$min<surfaceDepth&!is.na(minMaxDepth$min),'min']<-0
+minMaxDepth$surface<-minMaxDepth$min<surfaceDepth
+minMaxDepth$noDive<-minMaxDepth$max<surfaceDepth
 minMaxDepth<-minMaxDepth[order(minMaxDepth$Ptt,minMaxDepth$rDate),]
-belowSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x)binary2range(!x$surface))
+belowSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x){
+  belows<-binary2range(!x$surface&x$deployDay> -10)
+  belows$start<-x[belows$start,'deployDay']
+  belows$end<-x[belows$end,'deployDay']
+  return(belows)
+})
+onSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x){
+  noDives<-binary2range(x$noDive&x$deployDay> -10)
+  noDives$start<-x[noDives$start,'deployDay']
+  noDives$end<-x[noDives$end,'deployDay']
+  noDives<-noDives[noDives$end-noDives$start>2,]
+  return(noDives)
+})
 
 
 #only ARGOS reprocess with geo
@@ -62,4 +87,15 @@ locations<-readWild('processed/PAT Data-Locations.csv')
 
 histos<-readWild('processed/PAT Data-Histos.csv')
 divePdt<-readWild('processed/PAT Data-DivePDT.csv')
+divePdt$maxDepth<-divePdt$Depth
+divePdt$minDepth<-NA
+divePdt$source<-'divePdt'
+
+
+statusData$minDepth<-0
+statusData$maxDepth<-NA
+statusData$source<-'status'
+
+depthCols<-c('rDate','minDepth','maxDepth','source')
+allDepths<-rbind(divePdt[,depthCols],pdt[,depthCols],statusData[,depthCols])
 
