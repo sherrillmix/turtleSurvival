@@ -49,6 +49,13 @@ minMaxDepth<-minMaxDepth[minMaxDepth$DeployID %in% info$PTTID,]
 
 statusData$deployDay<-calcDeployDay(statusData$Ptt,statusData$rDate,deployDates)
 minMaxDepth$deployDay<-calcDeployDay(minMaxDepth$Ptt,minMaxDepth$rDate,deployDates)
+minMaxDepth$min<-minMaxDepth$MinDepth
+surfaceDepth<-20
+minMaxDepth[minMaxDepth$min<surfaceDepth&!is.na(minMaxDepth$min),'min']<-0
+minMaxDepth$surface<-minMaxDepth$min<1
+minMaxDepth<-minMaxDepth[order(minMaxDepth$Ptt,minMaxDepth$rDate),]
+belowSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x)binary2range(!x$surface))
+
 
 #only ARGOS reprocess with geo
 locations<-readWild('processed/PAT Data-Locations.csv')
