@@ -23,8 +23,8 @@ calcDeployDay<-function(animals,rdate,deployDates){
   (as.numeric(rdate)-as.numeric(deployDates[as.character(animals)]))/24/60/60
 }
 
-tagData<-readWild('processed/PAT Data-Summary.csv')
-statusData<-readWild('processed/PAT Data-Status.csv')
+tagData<-readWild(list.files('processed','.*-Summary.csv',full.names=TRUE))
+statusData<-readWild(list.files('processed','.*-Status.csv',full.names=TRUE))
 statusData$rReleaseTime<-parse_date_time(statusData$ReleaseTime,'%H:%M:%S %d-%b-%y')
 #remove status data with crazy release dates prior to deployment
 statusData<-statusData[statusData$rReleaseTime > deployDates[as.character(statusData$Ptt)]|is.na(statusData$rReleaseTime),]
@@ -35,7 +35,7 @@ releaseDates<-unlist(by(statusData,statusData$Ptt,function(x){
   if(tail(tab,1)/sum(tab)<.7)warning(sprintf('Ambiguous release time in PTT %s',x[1,'Ptt']))
   return(tail(names(tab),1))
 }))
-pdt<-readWild('processed/PAT Data-PDTs.csv')
+pdt<-readWild(list.files('processed','.*-PDTs.csv',full.names=TRUE))
 pdt<-pdt[is.na(pdt$Partial),]
 depthColumns<-colnames(pdt)[grep('^Depth',colnames(pdt))]
 goodRows<-apply(pdt[,depthColumns],1,function(x)any(!is.na(x)))
@@ -48,7 +48,7 @@ pdt$source<-'pdt'
 info$releaseDate<-parse_date_time(sapply(info$ptt,function(x)releaseDates[as.character(x)]),'%H:%M:%S %d-%b-%y')
 info$releaseDays<-(as.numeric(info$releaseDate)-as.numeric(info$deployDate))/24/60/60
 
-minMaxDepth<-readWild('processed/PAT Data-MinMaxDepth.csv')
+minMaxDepth<-readWild(list.files('processed','.*-MinMaxDepth.csv',full.names=TRUE))
 
 if(any(!info$ptt %in% tagData$DeployID))warning('Missing tag ',paste(info[!info$ptt %in% tagData$DeployID,'ptt'],collapse=''))
 missingInfo<-tagData[!tagData$DeployID %in% info$ptt,]
@@ -106,10 +106,10 @@ onSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x){
 
 
 #only ARGOS reprocess with geo
-locations<-readWild('processed/PAT Data-Locations.csv')
+locations<-readWild(list.files('processed','.*-Locations.csv',full.names=TRUE))
 
-histos<-readWild('processed/PAT Data-Histos.csv')
-divePdt<-readWild('processed/PAT Data-DivePDT.csv')
+histos<-readWild(list.files('processed','.*-Histos.csv',full.names=TRUE))
+divePdt<-readWild(list.files('processed','.*-DivePDT.csv',full.names=TRUE))
 divePdt$maxDepth<-divePdt$Depth
 divePdt$minDepth<-NA
 divePdt$source<-'divePdt'
