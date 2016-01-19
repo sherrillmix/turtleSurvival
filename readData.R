@@ -105,8 +105,10 @@ onSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x){
 })
 
 
-#only ARGOS reprocess with geo
+#only ARGOS. for some reason no light
 locations<-readWild(list.files('processed','.*-Locations.csv',full.names=TRUE))
+lightLoc<-readWild(list.files('processed','.*-LightLoc.csv',full.names=TRUE))
+
 
 histos<-readWild(list.files('processed','.*-Histos.csv',full.names=TRUE))
 divePdt<-readWild(list.files('processed','.*-DivePDT.csv',full.names=TRUE))
@@ -125,20 +127,27 @@ allDepths<-rbind(divePdt[,depthCols],pdt[,depthCols],statusData[,depthCols])
 
 
 releaseTypes<-unlist(by(statusData,statusData$Ptt,function(x){
+  broke<-sort(table(x$InitiallyBroken))
+  if(length(broke)>0){
+    if(tail(broke,1)/sum(broke)<.7)warning(sprintf('Ambiguous breakage in PTT %s',x[1,'Ptt']))
+    if(tail(names(broke),1)=='1')return('Broken')
+  }
   tab<-sort(table(x$ReleaseType[!is.na(x$rReleaseTime)&x$ReleaseType!='']))
   if(length(tab)==0)return(NA)
-  if(tail(tab,1)/sum(tab)<.7)warning(sprintf('Ambiguous release time in PTT %s',x[1,'Ptt']))
+  if(tail(tab,1)/sum(tab)<.7)warning(sprintf('Ambiguous release type in PTT %s',x[1,'Ptt']))
   return(tail(names(tab),1))
 }))
 info$releaseType<-releaseTypes[info$ptt]
 
 info$fate<-NA
 #scheduled release 
-info$fate[info$releaseType=='Scheduled']<-'Scheduled'
+info$fate[info$releaseType %in% c('Scheduled','Interval')]<-'Scheduled'
 #labeled too deeps (misses some)
 info$fate[info$releaseType=='Too Deep']<-'TooDeep'
 #labeled floaters (misses some)
 info$fate[info$releaseType=='Floater']<-'Float'
+#labeled floaters (misses some)
+info$fate[info$releaseType=='Broken']<-'Broken'
 #still on turtle?
 info$fate[is.na(info$releaseType)]<-'StillOn'
 #too deep or float or no surface
