@@ -107,6 +107,7 @@ onSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x){
 
 #only ARGOS. for some reason no light
 locations<-readWild(list.files('processed','.*-Locations.csv',full.names=TRUE))
+locations$deployDay<-calcDeployDay(locations$Ptt,locations$rDate,deployDates)
 lightLoc<-readWild(list.files('processed','.*-LightLoc.csv',full.names=TRUE))
 
 

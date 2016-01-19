@@ -74,27 +74,3 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
 }
 dev.off()
 
-pdf('out/locations.pdf')
-for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
-  thisData<-locations[locations$Ptt==as.numeric(ii)&!is.na(locations$Latitude)&!is.na(locations$Longitude)&locations$deployDay>-100,]
-  if(nrow(thisData)==0){
-    warning('No data for ',ii)
-    next
-  }
-  thisStatus<-statusData[statusData$Ptt==as.numeric(ii),]
-  thisStatus<-thisStatus[apply(thisStatus[,statusCols],1,function(x)any(!is.na(x)&x!=''&x!=0)),]
-  thisBelow<-belowSurface[[as.character(ii)]]
-  thisSurface<-onSurface[[as.character(ii)]]
-  thisInfo<-info[info$ptt==ii,]
-  xlim<-range(thisData$Latitude)
-  ylim<-range(thisData$Longitude)
-  plot(1,1,type='n',main=ii,xlim=xlim+c(-.2,.2)*diff(xlim),ylim=rev(ylim),xlab='Latitude',ylab='Longitude')
-  lines(thisData$Latitude,thisData$Longitude,col='gray')
-  points(thisData$Latitude,thisData$Longitude)
-  releaseLoc<-thisData[max(c(which(thisData$deployDay<thisInfo$realRelease),0)),]
-  points(releaseLoc$Latitude,releaseLoc$Longitude,cex=2,col='red')
-  map()
-}
-dev.off()
-
-
