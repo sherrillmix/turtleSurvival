@@ -151,6 +151,7 @@ info$fate[info$releaseType=='Floater']<-'Float'
 info$fate[info$releaseType=='Broken']<-'Broken'
 #still on turtle?
 info$fate[is.na(info$releaseType)]<-'StillOn'
+info$fate[is.na(info$releaseType)&now()-info$deployDate>400]<-'Lost'
 #too deep or float or no surface
 info$fate[is.na(info$fate)]<-sapply(info$ptt[is.na(info$fate)],function(x,surfaceDepth=10){
   thisRelease<-info[x,'releaseDays']
@@ -176,9 +177,9 @@ info$realRelease<-sapply(info$ptt,function(x,surfaceDepth=10){
   thisDepths[max(c(1,which(thisDepths$max>surfaceDepth))),'deployDay']
 },surfaceDepth)
 info$lastDay<-info$realRelease
-info[info$fate=='StillOn','lastDay']<-sapply(info[info$fate=='StillOn','ptt'],function(x)max(c(0,minMaxDepth[minMaxDepth$Ptt==x,'deployDay'])))
+info[info$fate %in% c('StillOn','Lost'),'lastDay']<-sapply(info[info$fate %in% c('StillOn','Lost'),'ptt'],function(x)max(c(0,minMaxDepth[minMaxDepth$Ptt==x,'deployDay'])))
 
-info$hook<-ifelse(grepl('Deep',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Deep',ifelse(grepl('Light',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Light','NoHook'))
+info$hook<-ifelse(grepl('Deep',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Deep',ifelse(grepl('Light',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Light',ifelse(grepl('Not [hH]ooked',info$Lightly.or.Deeply.Hooked..based.on.pics.),'NoHook',NA)))
 info$hook[info$Lightly.or.Deeply.Hooked..based.on.pics.=='Unknown']<-NA
 
 
