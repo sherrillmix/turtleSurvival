@@ -117,6 +117,27 @@ divePdt$maxDepth<-divePdt$Depth
 divePdt$minDepth<-NA
 divePdt$source<-'divePdt'
 
+tad<-histos[histos$HistType=='TAD',]
+tad$deployDay<-calcDeployDay(tad$Ptt,tad$rDate,deployDates)
+tad$surface<-(tad$Bin1+tad$Bin2)/100
+
+lowSurfaceTime<-by(tad,tad$Ptt,function(x){
+  belows<-binary2range(x$surface<.02 & x$deployDay> -10)
+  if(nrow(belows)>0){
+    belows<-do.call(rbind,apply(belows,1,function(y){
+      #if 2 days of no data then split
+      bigDiffs<-which(diff(x$deployDay[y[1]:y[2]])>2)
+      out<-data.frame('start'=c(y[1],bigDiffs+y[1]),'end'=c(bigDiffs+y[1]-1,y[2]))
+      return(out)
+    }))
+  }
+  belows$start<-x[belows$start,'deployDay']
+  belows$end<-x[belows$end,'deployDay']
+  belows<-belows[belows$end-belows$start>2,]
+  return(belows)
+})
+
+
 
 statusData$minDepth<-0
 statusData$maxDepth<-NA

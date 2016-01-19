@@ -56,6 +56,7 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   thisStatus<-thisStatus[apply(thisStatus[,statusCols],1,function(x)any(!is.na(x)&x!=''&x!=0)),]
   thisBelow<-belowSurface[[as.character(ii)]]
   thisSurface<-onSurface[[as.character(ii)]]
+  thisSurfaceTime<-lowSurfaceTime[[as.character(ii)]]
   thisInfo<-info[info$ptt==ii,]
   xlim<-range(thisData$deployDay)
   ylim<-range(c(0,thisData$MinDepth,thisData$MaxDepth))
@@ -71,6 +72,34 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   lines(thisData$deployDay,thisData$max)
   points(thisData$deployDay,thisData$max)
   if(nrow(thisSurface)>0)segments(thisSurface$start,par('usr')[4]/2,thisSurface$end,par('usr')[4]/2,lwd=4,col='#0000FF33')
+  if(nrow(thisSurfaceTime)>0)segments(thisSurfaceTime$start,par('usr')[4]*.75,thisSurfaceTime$end,par('usr')[4]*.75,lwd=4,col='#00FF0033')
 }
 dev.off()
+
+cols<-rev(heat.colors(1001))
+pdf('out/tad.pdf',width=12)
+for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
+  thisData<-tad[tad$Ptt==as.numeric(ii)&tad$deployDay>-1,]
+  if(nrow(thisData)==0){
+    warning('No tad data for ',ii)
+    next
+  }
+  #thisBelow<-belowSurface[[as.character(ii)]]
+  #thisSurface<-onSurface[[as.character(ii)]]
+  #thisSurfaceTime<-lowSurfaceTime[[as.character(ii)]]
+  thisInfo<-info[info$ptt==ii,]
+  thisBins<-colnames(thisData)[grepl('^Bin',colnames(thisData))&apply(is.na(thisData),2,mean)<.1]
+  xlim<-c(-1,max(thisData$deployDay)+.5)
+  ylim<-c(length(thisBins)+.5,.5)
+  plot(1,1,type='n',main=ii,xlim=xlim,ylim=ylim,xlab='Deploy day',ylab='Depth bin',yaxs='i',xaxs='i')
+  rect(rep(thisData$deployDay,length(thisBins))-.125,rep(1:length(thisBins),each=nrow(thisData))-.5,rep(thisData$deployDay,length(thisBins))+.125,rep(1:length(thisBins),each=nrow(thisData))+.5,col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
+  abline(v=thisInfo$releaseDays,col='#0000FF33',lty=2)
+  abline(v=thisInfo$realRelease,col='#0000FF77',lty=2)
+  box()
+  #if(nrow(thisSurface)>0)segments(thisSurface$start,par('usr')[4]/2,thisSurface$end,par('usr')[4]/2,lwd=4,col='#0000FF33')
+  #if(nrow(thisSurfaceTime)>0)segments(thisSurfaceTime$start,par('usr')[4]*.75,thisSurfaceTime$end,par('usr')[4]*.75,lwd=4,col='#00FF0033')
+  #if(nrow(thisBelow)>0)segments(thisBelow$start,0,thisBelow$end,0,lwd=4,col='#FF000033')
+}
+dev.off()
+
 
