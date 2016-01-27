@@ -103,3 +103,4 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
 dev.off()
 
 
+write.csv(info[,c('ptt','hook','deployDate','lastDay','fate')],'out/fate.csv',row.names=FALSE)
