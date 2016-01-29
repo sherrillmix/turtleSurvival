@@ -24,3 +24,6 @@ done
 #identify mortalities
 done?
 
+#get new version dna.R
+#find problem tad tags
+#check adjusted depth on problem tags

@@ -1,4 +1,6 @@
 library('lubridate')
+source("~/scripts/R/dna.R") #binary2range
+
 
 info<-read.csv('Caretta_Hooked_Table_2011-2015.csv',stringsAsFactors=FALSE)
 info$deployDate<-parse_date_time(info$Deployment.Date..yyyy.mm.dd.,'mdy')
@@ -202,5 +204,10 @@ info[info$fate %in% c('StillOn','Lost'),'lastDay']<-sapply(info[info$fate %in% c
 
 info$hook<-ifelse(grepl('Deep',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Deep',ifelse(grepl('Light',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Light',ifelse(grepl('Not [hH]ooked',info$Lightly.or.Deeply.Hooked..based.on.pics.),'NoHook',NA)))
 info$hook[info$Lightly.or.Deeply.Hooked..based.on.pics.=='Unknown']<-NA
+
+#work on ZeroDepthOffset vs Depth in statusData
+#p11 and p58 of quickstart
+#ask Mike if these tags had wet dry and/or were set to adjust zerodepth offset
+#potentially +ZeroDepthOffset*.5
 
 
