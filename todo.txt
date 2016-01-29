@@ -1,0 +1,26 @@
+#deployment and popoff
+
+#popoff by month
+  add julian deploy day
+
+#location animation
+  add julian day 
+
+#distance traveled and hooking location
+
+#mortality curve
+done
+
+#hooking location and mortality
+done
+
+#plot per turtle
+done
+
+#find predation
+	109816
+	lightLevels
+
+#identify mortalities
+done?
+
