@@ -1,8 +1,11 @@
 library('lubridate')
+source('~/scripts/R/dna.R')
 
 info<-read.csv('Caretta_Hooked_Table_2011-2015.csv',stringsAsFactors=FALSE)
 info$deployDate<-parse_date_time(info$Deployment.Date..yyyy.mm.dd.,'mdy')
 info$ptt<-as.character(info$PTTID)
+info[info$CCL.notch.to.tip=='N/A','CCL.notch.to.tip']<-NA
+info$CCL.notch.to.tip<-as.numeric(info$CCL.notch.to.tip)
 rownames(info)<-info$ptt
 deployDates<-info$deployDate
 names(deployDates)<-info$ptt
@@ -105,7 +108,6 @@ onSurface<-by(minMaxDepth,minMaxDepth$Ptt,function(x){
 })
 
 
-#only ARGOS. for some reason no light
 locations<-readWild(list.files('processed','.*-Locations.csv',full.names=TRUE))
 locations$deployDay<-calcDeployDay(locations$Ptt,locations$rDate,deployDates)
 lightLoc<-readWild(list.files('processed','.*-LightLoc.csv',full.names=TRUE))
@@ -119,7 +121,49 @@ divePdt$source<-'divePdt'
 
 tad<-histos[histos$HistType=='TAD',]
 tad$deployDay<-calcDeployDay(tad$Ptt,tad$rDate,deployDates)
+tad<-tad[tad$deployDay>-50,]
 tad$surface<-(tad$Bin1+tad$Bin2)/100
+tad<-tad[tad$Ptt %in% unique(statusData$Ptt),]
+binCols<-grep('^Bin',colnames(tad))
+tad[,binCols][tad[,binCols]=='']<-NA
+for(ii in binCols){
+  if(class(tad[,ii])=='character')tad[,ii]<-as.numeric(tad[,ii])
+}
+source('findDepthOffset.R')
+tadLimits<-histos[histos$HistType=='TADLIMITS',]
+pttTadLimits<-lapply(unique(tad$Ptt),function(ptt){
+  thisLimits<-tadLimits[tadLimits$Ptt==ptt,] 
+  if(nrow(thisLimits)>1)stop(simpleError('Multiple limits found'))
+  if(nrow(thisLimits)==0)return(NULL)
+  thisBins<-thisLimits[,binCols]
+  thisBins<-unlist(thisBins[,!is.na(thisBins)&thisBins!=''])
+  thisBins[length(thisBins)]<-sub('>[0-9.]+','Inf',thisBins[length(thisBins)])
+  if(length(thisBins)<10)return(NULL)
+  return(as.numeric(thisBins))
+  #may have been set nrow to 0 above if it looks like there is missing bins
+})
+names(pttTadLimits)<-unique(tad$Ptt)
+badLimits<-sapply(pttTadLimits,is.null)
+pttTadLimits[badLimits]<-lapply(names(pttTadLimits)[badLimits],function(ptt){
+  pttDist<-abs(as.numeric(ptt)-as.numeric(names(pttTadLimits)[!badLimits]))
+  sisterPtts<-names(pttTadLimits)[!badLimits][pttDist<=sort(pttDist)[5]&pttDist<20]
+  message('Inferring TAD limits from sister tags ',paste(sisterPtts,collapse=', '),' for tag ',ptt)
+  replaceLimits<-unique(pttTadLimits[sisterPtts])
+  if(length(replaceLimits)>1)stop(simpleError('Disagreement in TAD limits between neighboring PTTs'))
+  if(length(replaceLimits)==0)stop(simpleError('No neighboring PTT found to set TAD'))
+  return(replaceLimits[[1]])
+})
+maxLength<-max(sapply(pttTadLimits,length))
+pttTadLimits<-do.call(rbind,lapply(pttTadLimits,function(x)c(x,rep(NA,maxLength-length(x)))))
+depthFixes<-mapply(function(ptt,day)depthOffsets[[as.character(ptt)]][as.character(day)],tad$Ptt,round(tad$deployDay))
+if(any(sapply(depthFixes,length)==0))stop(simpleError('Problem finding depth adjustment'))
+tad$depthFix<-depthFixes
+tadBins<-pttTadLimits[as.character(tad$Ptt),]-tad$depthFix
+colnames(tadBins)<-sprintf('Depth%d',1:ncol(tadBins))
+tad<-cbind(tad,tadBins)
+
+
+
 
 lowSurfaceTime<-by(tad,tad$Ptt,function(x){
   belows<-binary2range(x$surface<.02 & x$deployDay> -10)
@@ -202,5 +246,8 @@ info[info$fate %in% c('StillOn','Lost'),'lastDay']<-sapply(info[info$fate %in% c
 
 info$hook<-ifelse(grepl('Deep',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Deep',ifelse(grepl('Light',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Light',ifelse(grepl('Not [hH]ooked',info$Lightly.or.Deeply.Hooked..based.on.pics.),'NoHook',NA)))
 info$hook[info$Lightly.or.Deeply.Hooked..based.on.pics.=='Unknown']<-NA
+
+sst<-readWild(list.files('processed','.*-SST.csv',full.names=TRUE))
+sst$deployDay<-calcDeployDay(sst$Ptt,sst$rDate,deployDates)
 
 

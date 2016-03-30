@@ -89,12 +89,31 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   #thisSurfaceTime<-lowSurfaceTime[[as.character(ii)]]
   thisInfo<-info[info$ptt==ii,]
   thisBins<-colnames(thisData)[grepl('^Bin',colnames(thisData))&apply(is.na(thisData),2,mean)<.1]
+  thisDepths<-thisData[,colnames(thisData)[grepl('^Depth[0-9]+$',colnames(thisData))&apply(is.na(thisData),2,mean)<.1]]
+  thisProps<-thisData[,thisBins]
+  if(ncol(thisDepths)==length(thisBins)){
+    thisDepths<-cbind('Depth0'=-10,thisDepths)
+  }
+  if(ncol(thisDepths)==length(thisBins)-1 && !all(thisDepths[,ncol(thisDepths)]==Inf)){
+    thisDepths<-cbind('Depth0'=-10,thisDepths,'DepthInf'=Inf)
+  }
+  if(ncol(thisProps)<ncol(thisDepths)-1){
+    dummy<-matrix(0,nrow(thisProps),ncol=ncol(thisDepths)-ncol(thisProps)-1)
+    thisProps<-cbind(thisProps,dummy)
+  }
+  message('Bins ',length(thisBins),' Depths ',ncol(thisDepths))
+  if(ncol(thisDepths)!=ncol(thisProps)+1)stop(simpleError('Depth and bin mismatch'))
+  thisDepths[is.infinite(thisDepths[,ncol(thisDepths)]),ncol(thisDepths)]<-2000
   xlim<-c(-1,max(thisData$deployDay)+.5)
-  ylim<-c(length(thisBins)+.5,.5)
-  plot(1,1,type='n',main=ii,xlim=xlim,ylim=ylim,xlab='Deploy day',ylab='Depth bin',yaxs='i',xaxs='i')
-  rect(rep(thisData$deployDay,length(thisBins))-.125,rep(1:length(thisBins),each=nrow(thisData))-.5,rep(thisData$deployDay,length(thisBins))+.125,rep(1:length(thisBins),each=nrow(thisData))+.5,col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
+  #ylim<-c(length(thisBins)+.5,.5)
+  plot(1,1,type='n',main=ii,xlim=xlim,ylim=c(sqrt(500),-sqrt(10)),xlab='Deploy day',ylab='Depth',yaxs='i',xaxs='i',yaxt='n')
+  sqrtWithNeg<-function(x)sqrt(abs(x))*sign(x)
+  rect(rep(thisData$deployDay,length(thisBins))-.125,sqrtWithNeg(unlist(thisDepths[,-ncol(thisDepths)])),rep(thisData$deployDay,length(thisBins))+.125,sqrtWithNeg(unlist(thisDepths[,-1])),col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
+  #plot(1,1,type='n',main=ii,xlim=xlim,ylim=ylim,xlab='Deploy day',ylab='Depth bin',yaxs='i',xaxs='i')
+  #rect(rep(thisData$deployDay,length(thisBins))-.125,rep(1:length(thisBins),each=nrow(thisData))-.5,rep(thisData$deployDay,length(thisBins))+.125,rep(1:length(thisBins),each=nrow(thisData))+.5,col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
   abline(v=thisInfo$releaseDays,col='#0000FF33',lty=2)
   abline(v=thisInfo$realRelease,col='#0000FF77',lty=2)
+  abline(h=0,lty=2)
   box()
   #if(nrow(thisSurface)>0)segments(thisSurface$start,par('usr')[4]/2,thisSurface$end,par('usr')[4]/2,lwd=4,col='#0000FF33')
   #if(nrow(thisSurfaceTime)>0)segments(thisSurfaceTime$start,par('usr')[4]*.75,thisSurfaceTime$end,par('usr')[4]*.75,lwd=4,col='#00FF0033')
