@@ -46,6 +46,7 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
 dev.off()
 
 pdf('out/minMaxStatus.pdf')
+par(mar=c(5.5,4,1,.1),mgp=c(2.5,.8,0),las=1)
 for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   thisData<-minMaxDepth[minMaxDepth$Ptt==as.numeric(ii)&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-100,]
   if(nrow(thisData)==0){
@@ -73,6 +74,7 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   points(thisData$deployDay,thisData$max)
   if(nrow(thisSurface)>0)segments(thisSurface$start,par('usr')[4]/2,thisSurface$end,par('usr')[4]/2,lwd=4,col='#0000FF33')
   if(nrow(thisSurfaceTime)>0)segments(thisSurfaceTime$start,par('usr')[4]*.75,thisSurfaceTime$end,par('usr')[4]*.75,lwd=4,col='#00FF0033')
+  legend('bottomleft',c('Low surface','No surface','Long surface','Tag release','Infer release','Raw mins'),lty=c(1,1,1,2,2,1),col=c('#00FF0033','#0000FF33','#FF000033','#0000FF33','#0000FF77','grey'),lwd=c(4,4,4,1,1,1),inset=c(-.14,-.21),ncol=2,xpd=NA,bty='n')
 }
 dev.off()
 
@@ -105,12 +107,12 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   if(ncol(thisDepths)!=ncol(thisProps)+1)stop(simpleError('Depth and bin mismatch'))
   thisDepths[is.infinite(thisDepths[,ncol(thisDepths)]),ncol(thisDepths)]<-2000
   xlim<-c(-1,max(thisData$deployDay)+.5)
-  #ylim<-c(length(thisBins)+.5,.5)
-  plot(1,1,type='n',main=ii,xlim=xlim,ylim=c(sqrt(500),-sqrt(10)),xlab='Deploy day',ylab='Depth',yaxs='i',xaxs='i',yaxt='n')
-  sqrtWithNeg<-function(x)sqrt(abs(x))*sign(x)
-  rect(rep(thisData$deployDay,length(thisBins))-.125,sqrtWithNeg(unlist(thisDepths[,-ncol(thisDepths)])),rep(thisData$deployDay,length(thisBins))+.125,sqrtWithNeg(unlist(thisDepths[,-1])),col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
-  #plot(1,1,type='n',main=ii,xlim=xlim,ylim=ylim,xlab='Deploy day',ylab='Depth bin',yaxs='i',xaxs='i')
-  #rect(rep(thisData$deployDay,length(thisBins))-.125,rep(1:length(thisBins),each=nrow(thisData))-.5,rep(thisData$deployDay,length(thisBins))+.125,rep(1:length(thisBins),each=nrow(thisData))+.5,col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
+  ylim<-c(length(thisBins)+.5,.5)
+  #plot(1,1,type='n',main=ii,xlim=xlim,ylim=c(sqrt(500),-sqrt(10)),xlab='Deploy day',ylab='Depth',yaxs='i',xaxs='i',yaxt='n')
+  #sqrtWithNeg<-function(x)sqrt(abs(x))*sign(x)
+  #rect(rep(thisData$deployDay,length(thisBins))-.125,sqrtWithNeg(unlist(thisDepths[,-ncol(thisDepths)])),rep(thisData$deployDay,length(thisBins))+.125,sqrtWithNeg(unlist(thisDepths[,-1])),col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
+  plot(1,1,type='n',main=ii,xlim=xlim,ylim=ylim,xlab='Deploy day',ylab='Depth bin',yaxs='i',xaxs='i')
+  rect(rep(thisData$deployDay,length(thisBins))-.125,rep(1:length(thisBins),each=nrow(thisData))-.5,rep(thisData$deployDay,length(thisBins))+.125,rep(1:length(thisBins),each=nrow(thisData))+.5,col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
   abline(v=thisInfo$releaseDays,col='#0000FF33',lty=2)
   abline(v=thisInfo$realRelease,col='#0000FF77',lty=2)
   abline(h=0,lty=2)
@@ -118,8 +120,8 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   #if(nrow(thisSurface)>0)segments(thisSurface$start,par('usr')[4]/2,thisSurface$end,par('usr')[4]/2,lwd=4,col='#0000FF33')
   #if(nrow(thisSurfaceTime)>0)segments(thisSurfaceTime$start,par('usr')[4]*.75,thisSurfaceTime$end,par('usr')[4]*.75,lwd=4,col='#00FF0033')
   #if(nrow(thisBelow)>0)segments(thisBelow$start,0,thisBelow$end,0,lwd=4,col='#FF000033')
+  lines(thisData$deployDay,thisData$tadOffsetBin)
 }
 dev.off()
 
 
-write.csv(info[,c('ptt','hook','deployDate','lastDay','fate')],'out/fate.csv',row.names=FALSE)
