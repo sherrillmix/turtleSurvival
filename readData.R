@@ -259,7 +259,6 @@ lowSurfaceTime<-by(tad,tad$Ptt,function(x){
   belows<-belows[belows$end-belows$start>4,]
   return(belows)
 })
->>>>>>> 60823e9d41692777281ebb42b1b95965fd838642
 
 
 write.csv(info[,c('ptt','hook','deployDate','lastDay','fate')],'out/fate.csv',row.names=FALSE)
