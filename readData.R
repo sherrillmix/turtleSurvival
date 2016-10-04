@@ -1,5 +1,5 @@
 library('lubridate')
-source('~/scripts/R/dna.R')
+library(dnar)
 
 info<-read.csv('Caretta_Hooked_Table_2011-2015.csv',stringsAsFactors=FALSE)
 info$deployDate<-parse_date_time(info$Deployment.Date..yyyy.mm.dd.,'mdy')
