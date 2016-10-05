@@ -5,9 +5,21 @@
 library(xtable)
 library(lubridate)
 info<-read.csv('../out/info.csv',stringsAsFactors=FALSE)
+and<-function(x){
+  if(length(x)==1)return(x)
+  last2<-length(x)-1:0
+  x<-c(x[-last2],paste(x[last2],collapse=' and '))
+  paste(x,collapse=', ')
+}
 @
 \section{Methods}
-Over the course of 4 tagging seasons, 80 pop-up satellite archival tags were deployed by researchers, commercial fishermen and fishery observers.  Combined these tracking data cover 9785 turtle-days.
+Over the course of 4 tagging seasons, 80 pop-up satellite archival tags were deployed by researchers, commercial fishermen and fishery observers.  Combined these tracking data cover 9785 turtle-days. A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used.
+
+Tag types per year:
+<<echo=FALSE,results=tex>>=
+print(xtable(table(info$Tag.Type,year(info$deployDate))))
+@
+
 
 Tag data was [[MIKE: DOWNLOADED FROM WC WEBSITE]] and processed using WC-DAP v3.0.369. Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate. The tags were programmed to release after a set period, after [[MIKE: X days]] constant depth or reaching a maximum depth threshold to allow transmission of data prior to tag failure.
 
@@ -16,11 +28,6 @@ Tag fate per year:
 
 <<echo=FALSE,results=tex>>=
 print(xtable(table(info$fate,year(info$deployDate))))
-@
-
-Tag types per year:
-<<echo=FALSE,results=tex>>=
-print(xtable(table(info$Tag.Type,year(info$deployDate))))
 @
 
 Observer/hook type:
