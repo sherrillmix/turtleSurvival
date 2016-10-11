@@ -1,4 +1,6 @@
 \documentclass[12pt]{article}
+\usepackage{longtable}
+\usepackage{microtype}
 \begin{document}
 
 <<echo=FALSE>>=
@@ -24,8 +26,14 @@ print(xtable(table(info$Tag.Type,year(info$deployDate))))
 Tag data was [[MIKE: DOWNLOADED FROM WC WEBSITE]] and processed using WC-DAP v3.0.369. Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate. The tags were programmed to release after a set period, after [[MIKE: X days]] constant depth or reaching a maximum depth threshold to allow transmission of data prior to tag failure.
 
 \section{Results}
-Tag fate per year:
+Turtle fate:
+<<echo=FALSE,results=tex>>=
+fate<-info[,c('ptt','hook','deployDate','lastDay','fate')]
+colnames(fate)<-c('PTT','Hook location','Deploy date','Deploy length','Fate')
+print(xtable(fate),tabular.environment='longtable',include.rownames=FALSE)
+@
 
+Tag fate per year:
 <<echo=FALSE,results=tex>>=
 print(xtable(table(info$fate,year(info$deployDate))))
 @
