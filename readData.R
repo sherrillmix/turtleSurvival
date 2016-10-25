@@ -16,6 +16,8 @@ rownames(monoFish)<-monoFish$Tag.Serial....Pat.Splash.ID.
 info$observer<-monoFish[info$ID,'Observer.Fisherman']
 info$observer[info$observer=='Mike James']<-'Observer'
 info$mono<-monoFish[info$ID,'Length.of.Mono.Remaining.cm.']
+info$observer[info$PTT %in% c('137771','137766')]<-"Fisherman"
+info$observer[info$PTT %in% c('152567')]<-"Observer"
 
 
 readWild<-function(x,...){
