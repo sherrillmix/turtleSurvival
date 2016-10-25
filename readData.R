@@ -6,6 +6,7 @@ info$deployDate<-parse_date_time(info$Deployment.Date..yyyy.mm.dd.,'mdy')
 info$ptt<-as.character(info$PTTID)
 info[info$CCL.notch.to.tip=='N/A','CCL.notch.to.tip']<-NA
 info$CCL.notch.to.tip<-as.numeric(info$CCL.notch.to.tip)
+info<-info[info$Tag.Type!='PTT SPLASH',] #don't include PTTs
 rownames(info)<-info$ptt
 deployDates<-info$deployDate
 names(deployDates)<-info$ptt
