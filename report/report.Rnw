@@ -1,6 +1,7 @@
 \documentclass[12pt]{article}
 \usepackage{longtable}
 \usepackage{microtype}
+\usepackage[margin=1in]{geometry}
 \usepackage[table]{xcolor}
 \begin{document}
 
@@ -15,7 +16,8 @@ and<-function(x){
   paste(x,collapse=', ')
 }
 makeAlign <- function(xx) {
-  format <- ifelse(apply(xx,2, is.numeric), "r", "l")
+  if(is.data.frame(xx))format <- ifelse(sapply(xx, is.numeric), "r", "l")
+  else format <- rep(ifelse(is.numeric(xx),'r','l'),ncol(xx))
   sprintf('|%s|',paste(c("r", format), collapse = "|"))
 }
 customXtable <- function(xx, ...,printArgs=c()) do.call(print.xtable,c(list(xtable(xx, ..., align = makeAlign(xx)),add.to.row=list(list(-1),'\\rowcolor{gray!5!blue!10}'),size='\\rowcolors{2}{blue!5}{white}'),printArgs))
@@ -33,21 +35,16 @@ Tag data was [[MIKE: DOWNLOADED FROM WC WEBSITE]] and processed using WC-DAP v3.
 \section{Results}
 Turtle fate:
 <<echo=FALSE,results=tex>>=
-fate<-info[,c('ptt','hook','deployDate','lastDay','fate')]
-colnames(fate)<-c('PTT','Hook location','Deploy date','Deploy length','Fate')
-fate$Fate<-sub('(.+)([A-Z])',' \\1 \\2',fate$Fate)
+fate<-info[,c('ptt','hook','deployDate','observer','lastDay','fate')]
+fate$hook<-sub('NoHook','No Hook',info$hook)
+fate$observer<-sub('Observer','Observer/researcher',info$observer)
+fate$fate<-sub('(.+)([A-Z])',' \\1 \\2',fate$fate)
+colnames(fate)<-c('PTT','Hook','Deploy date','Deployer','Deploy length','Fate')
 customXtable(fate,printArgs=list(tabular.environment='longtable',include.rownames=FALSE,floating=FALSE),caption="\\cellcolor{white}PTT tag IDs, hooking location, deployment date, deployment length and inferred fate for all turtles in the study",label='tabFate')
 @
 
-Tag fate per year:
 <<echo=FALSE,results=tex>>=
-print(xtable(table(info$fate,year(info$deployDate))))
-@
-
-Observer/hook type:
-
-<<echo=FALSE,results=tex>>=
-print(xtable(table(ifelse(is.na(info$observer),'Unknown',info$observer),info$hook)))
+customXtable(table(info$fate,year(info$deployDate)))
 @
 
 \section{Conclusions}
