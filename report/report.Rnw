@@ -1,6 +1,7 @@
 \documentclass[12pt]{article}
 \usepackage{longtable}
 \usepackage{microtype}
+\usepackage[table]{xcolor}
 \begin{document}
 
 <<echo=FALSE>>=
@@ -13,13 +14,17 @@ and<-function(x){
   x<-c(x[-last2],paste(x[last2],collapse=' and '))
   paste(x,collapse=', ')
 }
+makeAlign <- function(xx) {
+  format <- ifelse(apply(xx,2, is.numeric), "r", "l")
+  sprintf('|%s|',paste(c("r", format), collapse = "|"))
+}
+customXtable <- function(xx, ...,printArgs=c()) do.call(print.xtable,c(list(xtable(xx, ..., align = makeAlign(xx)),add.to.row=list(list(-1),'\\rowcolor{gray!5!blue!10}'),size='\\rowcolors{2}{blue!5}{white}'),printArgs))
 @
 \section{Methods}
-Over the course of 4 tagging seasons, 80 pop-up satellite archival tags were deployed by researchers, commercial fishermen and fishery observers.  Combined these tracking data cover 9785 turtle-days. A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used.
+Over the course of 4 tagging seasons, 80 pop-up satellite archival tags were deployed by researchers, commercial fishermen and fishery observers.  Combined these tracking data cover 9785 turtle-days. A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used (Table \ref{tabTagYear}).
 
-Tag types per year:
 <<echo=FALSE,results=tex>>=
-print(xtable(table(info$Tag.Type,year(info$deployDate))))
+customXtable(table(info$Tag.Type,year(info$deployDate)),caption="The types of tags deployed over the 4 tagging seasons",label='tabTagYear')
 @
 
 
@@ -30,7 +35,8 @@ Turtle fate:
 <<echo=FALSE,results=tex>>=
 fate<-info[,c('ptt','hook','deployDate','lastDay','fate')]
 colnames(fate)<-c('PTT','Hook location','Deploy date','Deploy length','Fate')
-print(xtable(fate),tabular.environment='longtable',include.rownames=FALSE)
+fate$Fate<-sub('(.+)([A-Z])',' \\1 \\2',fate$Fate)
+customXtable(fate,printArgs=list(tabular.environment='longtable',include.rownames=FALSE,floating=FALSE),caption="\\cellcolor{white}PTT tag IDs, hooking location, deployment date, deployment length and inferred fate for all turtles in the study",label='tabFate')
 @
 
 Tag fate per year:
