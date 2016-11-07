@@ -264,5 +264,7 @@ lowSurfaceTime<-by(tad,tad$Ptt,function(x){
 })
 
 
-write.csv(info[,c('ptt','hook','deployDate','lastDay','fate')],'out/fate.csv',row.names=FALSE)
+source('findRelease.R')
+write.csv(info[,c('ptt','hook','deployDate','lastDay','fate','releasePlan')],'out/fate.csv',row.names=FALSE)
 write.csv(info,'out/info.csv')
+
