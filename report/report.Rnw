@@ -147,8 +147,8 @@ customXtable(table(info$fate,year(info$deployDate)))
   addConfInt(kmMono,monoColor2,monoColor3,lty=2)
 @
 }
-\caption{abcd}
-\label{figKms}
+  \caption{Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for all turtles (A); deep, light or no hook turtles (B); observer or fisherman tagged turtles (C) and turtles with long ($>30$ cm) or short pieces of monofilament left attached to hooks (D). Shaded regions indicate 95\% confidence intervals.}
+  \label{figKms}
 \end{figure}
 
 
