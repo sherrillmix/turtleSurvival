@@ -93,6 +93,8 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   thisBins<-colnames(thisData)[grepl('^Bin',colnames(thisData))&apply(is.na(thisData),2,mean)<.1]
   thisDepths<-thisData[,colnames(thisData)[grepl('^Depth[0-9]+$',colnames(thisData))&apply(is.na(thisData),2,mean)<.1]]
   thisProps<-thisData[,thisBins]
+  thisMinMax<-minMaxDepth[minMaxDepth$Ptt==as.numeric(ii)&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-100,]
+  minMaxLim<-range(c(0,thisMinMax$min,thisMinMax$max))
   if(ncol(thisDepths)==length(thisBins)){
     thisDepths<-cbind('Depth0'=-10,thisDepths)
   }
@@ -111,7 +113,7 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   #plot(1,1,type='n',main=ii,xlim=xlim,ylim=c(sqrt(500),-sqrt(10)),xlab='Deploy day',ylab='Depth',yaxs='i',xaxs='i',yaxt='n')
   #sqrtWithNeg<-function(x)sqrt(abs(x))*sign(x)
   #rect(rep(thisData$deployDay,length(thisBins))-.125,sqrtWithNeg(unlist(thisDepths[,-ncol(thisDepths)])),rep(thisData$deployDay,length(thisBins))+.125,sqrtWithNeg(unlist(thisDepths[,-1])),col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
-  plot(1,1,type='n',main=paste(ii,' Correct dry: ',thisInfo$correctDry,' Premature disable: ',thisInfo$prematureDisable),xlim=xlim,ylim=ylim,xlab='Deploy day',ylab='Depth bin',yaxs='i',xaxs='i')
+  plot(1,1,type='n',main=paste(ii,' Correct dry: ',thisInfo$correctDry,' Premature disable: ',thisInfo$prematureDisable),xlim=xlim,ylim=ylim,xlab='Deploy day',ylab='Depth bin',yaxs='i',xaxs='i',las=1)
   rect(rep(thisData$deployDay,length(thisBins))-.125,rep(1:length(thisBins),each=nrow(thisData))-.5,rep(thisData$deployDay,length(thisBins))+.125,rep(1:length(thisBins),each=nrow(thisData))+.5,col=cols[1+round(unlist(thisData[,thisBins])*10)],border=NA)
   abline(v=thisInfo$releaseDays,col='#0000FF33',lty=2)
   abline(v=thisInfo$realRelease,col='#0000FF77',lty=2)
@@ -121,6 +123,12 @@ for(ii in unique(info$ptt[order(info$fate,info$ptt)])){
   #if(nrow(thisSurfaceTime)>0)segments(thisSurfaceTime$start,par('usr')[4]*.75,thisSurfaceTime$end,par('usr')[4]*.75,lwd=4,col='#00FF0033')
   #if(nrow(thisBelow)>0)segments(thisBelow$start,0,thisBelow$end,0,lwd=4,col='#FF000033')
   lines(thisData$deployDay,thisData$tadOffsetBin)
+  axis(2,1:length(thisDepths[1,])-.5,thisDepths[1,],cex.axis=.5,las=1,tcl=-.2,mgp=c(3,.3,0))
+  par(new=TRUE)
+  plot(1,1,type='n',xlab='',ylab='',xaxt='n',yaxt='n',xlim=xlim,ylim=rev(minMaxLim),xaxs='i')
+  lines(thisMinMax$deployDay,thisMinMax$min,col='#0000FF66')
+  lines(thisMinMax$deployDay,thisMinMax$max,col='#0000FF66')
+  axis(4,pretty(minMaxLim),las=1,mgp=c(3,.3,0),tcl=-.2)
 }
 dev.off()
 
