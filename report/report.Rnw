@@ -23,6 +23,7 @@ library(lubridate)
 library(survival)
 library(dnar)
 info<-read.csv('../out/info.csv',stringsAsFactors=FALSE)
+minMaxDepth<-read.csv('../out/minMaxDepth.csv',stringsAsFactors=FALSE)
 and<-function(x){
   if(length(x)==1)return(x)
   last2<-length(x)-1:0
@@ -150,6 +151,102 @@ customXtable(table(info$fate,year(info$deployDate)))
   \caption{Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for all turtles (A); deep, light or no hook turtles (B); observer or fisherman tagged turtles (C) and turtles with long ($>30$ cm) or short pieces of monofilament left attached to hooks (D). Shaded regions indicate 95\% confidence intervals.}
   \label{figKms}
 \end{figure}
+
+\begin{figure}
+\centering
+\subfloat{
+<<echo=FALSE,fig=TRUE,width=7,height=8.5>>=
+  #max(c(minMaxDepth$min,minMaxDepth$max),na.rm=TRUE)+100,
+  ylim<-c(700,-150)
+  xlim<-c(-40,max(minMaxDepth$deployDay)+20)
+  uniqTurtles<-sort(unique(minMaxDepth$Ptt))
+  nTurtle<-length(uniqTurtles)
+  nRow<-10
+  nCol<-ceiling(nTurtle/nRow)
+  #going to fill column wise below but want to fill row wise so invert nrow and ncol and t()
+  layoutMat<-matrix(0,ncol=nRow+2,nrow=nCol+2)
+  layoutMat[-c(1,nrow(layoutMat)),-c(1,ncol(layoutMat))]<-c(1:nTurtle,rep(0,nRow*nCol-nTurtle))
+  layoutMat<-t(layoutMat)
+  leftPlots<-apply(layoutMat,1,function(xx)min(c(xx[xx!=0],Inf),na.rm=TRUE))
+  bottomPlots<-apply(layoutMat,2,function(xx)max(c(xx[xx!=0],-Inf),na.rm=TRUE))
+  layout(layoutMat,width=c(.7,rep(1,nCol),.1),height=c(.1,rep(1,nRow),.6))
+  par(mar=c(0,0,0,0))
+  prettyX<-pretty(xlim)
+  prettyY<-pretty(ylim)
+  for(ii in 1:nTurtle){
+    thisData<-minMaxDepth[minMaxDepth$Ptt==as.numeric(uniqTurtles[ii])&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-20,]
+    plot(1,1,type='n',xlim=xlim,ylim=ylim,xaxt='n',yaxt='n')
+    if(ii %in% bottomPlots)axis(1,prettyX)
+    else axis(1,prettyX,rep('',length(prettyX)),tcl=-.2)
+    if(ii %in% leftPlots)axis(2,prettyY,las=1) #logAxis(2,offset=-1,las=1,axisMin=1)
+    else axis(2,prettyY,rep('',length(prettyY)),tcl=-.2)
+    lines(thisData$deployDay,thisData$max,col='#FF000099')
+    lines(thisData$deployDay,thisData$min,col='#0000FF99')
+    mtext(uniqTurtles[ii],3,line=-1.2,cex=.7)
+  }
+  text(grconvertX(.001,'ndc','user'),grconvertY(.5,'ndc','user'),'Depth (m)',,xpd=NA,srt=90,cex=2,adj=c(.5,1))
+  text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days after deployment',,xpd=NA,cex=2,adj=c(.5,0))
+@
+}
+  \caption{Minimum and maximum depth reports for all turtles in the study}
+  \label{figKms}
+\end{figure}
+
+\begin{figure}
+\centering
+\subfloat{
+<<echo=FALSE,fig=TRUE,width=7,height=8.5>>=
+  #max(c(minMaxDepth$min,minMaxDepth$max),na.rm=TRUE)+100,
+  ylim<-c(3000,.05)
+  xlim<-c(-35,5)
+  uniqTurtles<-sort(unique(minMaxDepth$Ptt))
+  nTurtle<-length(uniqTurtles)
+  nRow<-10
+  nCol<-ceiling(nTurtle/nRow)
+  #going to fill column wise below but want to fill row wise so invert nrow and ncol and t()
+  layoutMat<-matrix(0,ncol=nRow+2,nrow=nCol+2)
+  layoutMat[-c(1,nrow(layoutMat)),-c(1,ncol(layoutMat))]<-c(1:nTurtle,rep(0,nRow*nCol-nTurtle))
+  layoutMat<-t(layoutMat)
+  leftPlots<-apply(layoutMat,1,function(xx)min(c(xx[xx!=0],Inf),na.rm=TRUE))
+  bottomPlots<-apply(layoutMat,2,function(xx)max(c(xx[xx!=0],-Inf),na.rm=TRUE))
+  layout(layoutMat,width=c(.7,rep(1,nCol),.1),height=c(.1,rep(1,nRow),.6))
+  par(mar=c(0,0,0,0))
+  prettyX<-pretty(xlim)
+  prettyY<-pretty(ylim)
+  for(ii in 1:nTurtle){
+    thisInfo<-info[info$PTTID==uniqTurtles[ii],]
+    thisData<-minMaxDepth[minMaxDepth$Ptt==as.numeric(uniqTurtles[ii])&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-20,]
+    thisData$dropDay<-thisData$deployDay-ifelse(is.na(thisInfo$realRelease),thisInfo$lastDay,thisInfo$realRelease)
+    plot(1,1,type='n',xlim=xlim,ylim=ylim,xaxt='n',yaxt='n',log='y')
+    if(ii %in% bottomPlots)axis(1,prettyX)
+    else axis(1,prettyX,rep('',length(prettyX)),tcl=-.2)
+    if(ii %in% leftPlots){
+      ticks<-logAxis(2,offset=-1,las=1,axisMin=1)
+      axis(2,1,0,las=1)
+    } else {
+      #depending on first plot generating ticks
+      axis(2,ticks$minor,rep('',length(ticks$minor)),tcl=-.2)
+      axis(2,ticks$major,rep('',length(ticks$major)))
+    }
+    lines(thisData$dropDay,thisData$max+1,col='#FF000099')
+    lines(thisData$dropDay,thisData$min+1,col='#0000FF99')
+    points(thisData$dropDay,thisData$max+1,col='#FF000033',cex=.5)
+    points(thisData$dropDay,thisData$min+1,col='#0000FF33',cex=.5)
+    mtext(uniqTurtles[ii],3,line=-1.1,cex=.6)#,at=mean(xlim)-10)
+    mtext(thisInfo$fate,3,line=-1.7,cex=.6)#,at=mean(xlim)-10+strwidth('MMMM',cex=.6),adj=0)
+    abline(v=0,lty=2,col='#00000055')
+  }
+  text(grconvertX(.001,'ndc','user'),grconvertY(.5,'ndc','user'),'Depth (m)',,xpd=NA,srt=90,cex=2,adj=c(.5,1))
+  text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days before tag release',,xpd=NA,cex=2,adj=c(.5,0))
+
+@
+}
+  \caption{Minimum and maximum depth reports for all turtles in the study}
+  \label{figKms}
+\end{figure}
+
+
+
 
 
 \section{Conclusions}

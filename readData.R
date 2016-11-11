@@ -267,4 +267,5 @@ lowSurfaceTime<-by(tad,tad$Ptt,function(x){
 source('findRelease.R')
 write.csv(info[,c('ptt','hook','deployDate','lastDay','fate','releasePlan')],'out/fate.csv',row.names=FALSE)
 write.csv(info,'out/info.csv')
+write.csv(minMaxDepth,'out/minMaxDepth.csv')
 
