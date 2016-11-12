@@ -76,14 +76,14 @@ plotFunc<-function(km,col='black',text=''){
 
 @
 \section{Methods}
-Over the course of 4 tagging seasons, 80 pop-up satellite archival tags were deployed by researchers, commercial fishermen and fishery observers.  Combined these tracking data cover 9785 turtle-days. A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used (Table \ref{tabTagYear}).
+Over the course of \Sexpr{length(unique(year(info$deployDate)))} tagging seasons, \Sexpr{nrow(info)} pop-up satellite archival tags were deployed by researchers, commercial fishermen and fishery observers.  Combined these tracking data cover \Sexpr{sum(info$lastDay)} turtle-days. A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used (Table \ref{tabTagYear}).
 
 <<echo=FALSE,results=tex>>=
 customXtable(table(info$Tag.Type,year(info$deployDate)),caption="The types of tags deployed over the 4 tagging seasons",label='tabTagYear')
 @
 
 
-Tag data was [[MIKE: DOWNLOADED FROM WC WEBSITE]] and processed using WC-DAP v3.0.369. Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate. The tags were programmed to release after a set period, after [[MIKE: X days]] constant depth or reaching a maximum depth threshold to allow transmission of data prior to tag failure.
+Tag data was [[MIKE: DOWNLOADED FROM WC WEBSITE]] and processed using WC-DAP v3.0.369. Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate. The tags were programmed to release after a set period (between \Sexpr{paste(range(info$releasePlan),collapse='--')} days after deployment), after a prolonged period (4--8 days) at a constant depth or reaching a maximum depth threshold of 1700 meters [[MIKE: Did 2015 tags have this threshold? I don't see annotated anywhere?]].
 
 \section{Results}
 Turtle fate:
@@ -216,7 +216,7 @@ customXtable(table(info$fate,year(info$deployDate)))
   for(ii in 1:nTurtle){
     thisInfo<-info[info$PTTID==uniqTurtles[ii],]
     thisData<-minMaxDepth[minMaxDepth$Ptt==as.numeric(uniqTurtles[ii])&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-20,]
-    thisData$dropDay<-thisData$deployDay-ifelse(is.na(thisInfo$realRelease),thisInfo$lastDay,thisInfo$realRelease)
+    thisData$dropDay<-thisData$deployDay-thisInfo$lastDay
     plot(1,1,type='n',xlim=xlim,ylim=ylim,xaxt='n',yaxt='n',log='y')
     if(ii %in% bottomPlots)axis(1,prettyX)
     else axis(1,prettyX,rep('',length(prettyX)),tcl=-.2)
@@ -238,7 +238,6 @@ customXtable(table(info$fate,year(info$deployDate)))
   }
   text(grconvertX(.001,'ndc','user'),grconvertY(.5,'ndc','user'),'Depth (m)',,xpd=NA,srt=90,cex=2,adj=c(.5,1))
   text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days before tag release',,xpd=NA,cex=2,adj=c(.5,0))
-
 @
 }
   \caption{Minimum and maximum depth reports for all turtles in the study}
