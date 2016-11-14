@@ -76,14 +76,24 @@ plotFunc<-function(km,col='black',text=''){
 
 @
 \section{Methods}
-Over the course of \Sexpr{length(unique(year(info$deployDate)))} tagging seasons, \Sexpr{nrow(info)} pop-up satellite archival tags were deployed by researchers, commercial fishermen and fishery observers.  Combined these tracking data cover \Sexpr{sum(info$lastDay)} turtle-days. A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used (Table \ref{tabTagYear}).
+Over the course of \Sexpr{length(unique(year(info$deployDate)))} tagging seasons,
+\Sexpr{nrow(info)} pop-up satellite archival tags were deployed
+by researchers, commercial fishermen and fishery observers. 
+Combined these tracking data cover
+\Sexpr{floor(sum(info$lastDay))} turtle-days (Figure \ref{figMinMax}).
+A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used (Table \ref{tabTagYear}).
 
 <<echo=FALSE,results=tex>>=
 customXtable(table(info$Tag.Type,year(info$deployDate)),caption="The types of tags deployed over the 4 tagging seasons",label='tabTagYear')
 @
 
 
-Tag data was [[MIKE: DOWNLOADED FROM WC WEBSITE]] and processed using WC-DAP v3.0.369. Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate. The tags were programmed to release after a set period (between \Sexpr{paste(range(info$releasePlan),collapse='--')} days after deployment), after a prolonged period (4--8 days) at a constant depth or reaching a maximum depth threshold of 1700 meters [[MIKE: Did 2015 tags have this threshold? I don't see annotated anywhere?]].
+Tag data was [[MIKE: DOWNLOADED FROM WC WEBSITE]] and processed using WC-DAP v3.0.369.
+Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate.
+The tags were programmed to release after a set period
+(between \Sexpr{paste(range(info$releasePlan),collapse='--')} days after deployment),
+after a prolonged period (4--8 days) at a constant depth or
+reaching a maximum depth threshold of 1700 meters [[MIKE: Did 2015 tags have this threshold? I don't see annotated anywhere?]].
 
 \section{Results}
 Turtle fate:
@@ -189,7 +199,7 @@ customXtable(table(info$fate,year(info$deployDate)))
 @
 }
   \caption{Minimum and maximum depth reports for all turtles in the study}
-  \label{figKms}
+  \label{figMinMax}
 \end{figure}
 
 \begin{figure}
@@ -240,8 +250,8 @@ customXtable(table(info$fate,year(info$deployDate)))
   text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days before tag release',,xpd=NA,cex=2,adj=c(.5,0))
 @
 }
-  \caption{Minimum and maximum depth reports for all turtles in the study}
-  \label{figKms}
+  \caption{Minimum and maximum depth reports for all turtles in the study in the month prior to release}
+  \label{figRelease}
 \end{figure}
 
 
