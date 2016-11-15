@@ -66,9 +66,9 @@ addConfInt<-function(sf,cols,cols2=NA,...){
   }
 }
 
-plotFunc<-function(km,col='black',text=''){
+plotFunc<-function(km,col='black',text='',ylab='Proportion surviving'){
   par(mar=c(2.6,3,.1,.1))
-  plot(km,xlab='',ylab='Proportion surviving',conf.int=FALSE,mark.time=TRUE,mgp=c(2.1,.6,0),las=1,tcl=-.4,col=col,lwd=2)
+  plot(km,xlab='',ylab=ylab,conf.int=FALSE,mark.time=TRUE,mgp=c(2.1,.6,0),las=1,tcl=-.4,col=col,lwd=2)
   title(xlab='Days after tagging',mgp=c(1.6,1,0))
   if(!is.null(names(col)))legend('bottomright',names(col),col=col,lwd=2,bty='n')
   if(text!='')text(convertLineToUser(2.9,2),convertLineToUser(-.05,3),text,xpd=NA,adj=c(0,1),cex=1.5)
@@ -161,6 +161,31 @@ customXtable(table(info$fate,year(info$deployDate)))
   \caption{Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for all turtles (A); deep, light or no hook turtles (B); observer or fisherman tagged turtles (C) and turtles with long ($>30$ cm) or short pieces of monofilament left attached to hooks (D). Shaded regions indicate 95\% confidence intervals.}
   \label{figKms}
 \end{figure}
+\begin{figure}
+\centering
+\subfloat{
+<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+  drop<-Surv(info$lastDay,!info$fate %in% c('TooDeep','ConstantDepth','Scheduled'))
+  km<-survfit(drop~1,conf.type='log-log')
+  plotFunc(km,text='A',ylab='Proportion on turtle')
+  addConfInt(km,'#00000011','#00000033',lty=2)
+@
+}\subfloat{
+<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+  years<-year(info$deployDate)
+  yearColor<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
+  yearColor2<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
+  yearColor3<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+  names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(years)
+  km<-survfit(drop~years,conf.type='log-log')
+  plotFunc(km,yearColor,text='B')
+  addConfInt(km,yearColor2,yearColor3,lty=2)
+@
+}
+  \caption{Kaplan-Meier curves showing the estimated proportion of tags remaining on turtles. Maximum depth, constant depth and scheduled released are counted as censored observations.}
+  \label{figDrop}
+\end{figure}
+
 
 \begin{figure}
 \centering
