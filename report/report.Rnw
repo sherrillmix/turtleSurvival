@@ -170,10 +170,22 @@ customXtable(table(info$fate,year(info$deployDate)))
   plotFunc(km,text='A',ylab='Proportion on turtle')
   addConfInt(km,'#00000011','#00000033',lty=2)
 @
+
 }\subfloat{
 <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+  obs<-info$observer
+  yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
+  yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
+  yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+  names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
+  km<-survfit(drop~obs,conf.type='log-log')
+  plotFunc(km,yearColor,text='C',legendPos='topright')
+  addConfInt(km,yearColor2,yearColor3,lty=2)
+@
+}\\
+\subfloat{
+<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
   years<-year(info$deployDate)
-  nYears<-table(years)
   yearColor<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
   yearColor2<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
   yearColor3<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
@@ -184,7 +196,20 @@ customXtable(table(info$fate,year(info$deployDate)))
   plotFunc(km,yearColor,text='B',legendPos='topright')
   addConfInt(km,yearColor2,yearColor3,lty=2)
 @
+} \subfloat{
+<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+  #this is convoluted with year. maybe combine
+  obs<-info$Tag.Type
+  yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
+  yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
+  yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+  names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
+  km<-survfit(drop~obs,conf.type='log-log')
+  plotFunc(km,yearColor,text='D',legendPos='topright')
+  addConfInt(km,yearColor2,yearColor3,lty=2)
+@
 }
+
   \caption{Kaplan-Meier curves showing the estimated proportion of tags remaining on turtles. Maximum depth, constant depth and scheduled released are counted as censored observations.}
   \label{figDrop}
 \end{figure}
