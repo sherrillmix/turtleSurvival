@@ -54,6 +54,8 @@ addConfInt<-function(sf,cols,cols2=NA,...){
     times<-c(times,times[switches+1])
     uppers<-c(uppers,uppers[switches])
     lowers<-c(lowers,lowers[switches])
+    lowers[is.na(lowers)]<-0
+    uppers[is.na(uppers)]<-0
     newOrder<-order(times,-uppers,-lowers)
     times<-times[newOrder]
     uppers<-uppers[newOrder]
@@ -68,6 +70,8 @@ addConfInt<-function(sf,cols,cols2=NA,...){
 
 plotFunc<-function(km,col='black',text='',ylab='Proportion surviving',legendPos='bottomright'){
   par(mar=c(2.6,3,.1,.1))
+  if(!is.null(names(km$strata))&!is.null(names(col)))cols<-col[sub('^[^=]+=','',names(km$strata))]
+  else cols<-col
   plot(km,xlab='',ylab=ylab,conf.int=FALSE,mark.time=TRUE,mgp=c(2.1,.6,0),las=1,tcl=-.4,col=col,lwd=2)
   title(xlab='Days after tagging',mgp=c(1.6,1,0))
   if(!is.null(names(col)))legend(legendPos,names(col)[!is.na(col)],col=col[!is.na(col)],lwd=2,bty='n')
@@ -86,7 +90,6 @@ A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used 
 <<echo=FALSE,results=tex>>=
 customXtable(table(info$Tag.Type,year(info$deployDate)),caption="The types of tags deployed over the 4 tagging seasons",label='tabTagYear')
 @
-
 
 Tag data was [[MIKE: DOWNLOADED FROM WC WEBSITE]] and processed using WC-DAP v3.0.369.
 Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate.
@@ -158,8 +161,17 @@ customXtable(table(info$fate,year(info$deployDate)))
   addConfInt(kmMono,monoColor2,monoColor3,lty=2)
 @
 }
-  \caption{Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for all turtles (A); deep, light or no hook turtles (B); observer or fisherman tagged turtles (C) and turtles with long ($>30$ cm) or short pieces of monofilament left attached to hooks (D). Shaded regions indicate 95\% confidence intervals.}
-  \label{figKms}
+  \caption{
+    Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for all turtles (A);
+    deep, light or no hook turtles (B);
+    observer or fisherman tagged turtles (C)
+    and turtles with long ($>30$ cm) or short pieces of monofilament left attached to hooks (D).
+    Shaded regions indicate 95\% confidence intervals.
+    Lost tags, scheduled releases and tags prematurely released
+    without dives to maximum depth or a period of constant depth
+    are counted as censored observations (crosses).
+  }
+  \label{figKms} 
 \end{figure}
 \begin{figure}
 \centering
@@ -179,30 +191,30 @@ customXtable(table(info$fate,year(info$deployDate)))
   yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
   names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
   km<-survfit(drop~obs,conf.type='log-log')
-  plotFunc(km,yearColor,text='C',legendPos='topright')
+  plotFunc(km,yearColor,text='B',legendPos='topright')
   addConfInt(km,yearColor2,yearColor3,lty=2)
 @
 }\\
 \subfloat{
 <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
   years<-year(info$deployDate)
-  yearColor<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
-  yearColor2<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
-  yearColor3<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+  yearColor<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=1,start=.5,end=-2.5)
+  yearColor2<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=.5,end=-2.5)
+  yearColor3<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=.5,end=-2.5)
   names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(years)
   #only single obs in 2011
   yearColor[names(yearColor)=='2011']<-yearColor2[names(yearColor2)=='2011']<-yearColor3[names(yearColor3)=='2011']<-NA
   km<-survfit(drop~years,conf.type='log-log')
-  plotFunc(km,yearColor,text='B',legendPos='topright')
+  plotFunc(km,yearColor,text='C',legendPos='topright')
   addConfInt(km,yearColor2,yearColor3,lty=2)
 @
 } \subfloat{
 <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
   #this is convoluted with year. maybe combine
   obs<-info$Tag.Type
-  yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
-  yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
-  yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+  yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1)
+  yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1)
+  yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5)
   names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
   km<-survfit(drop~obs,conf.type='log-log')
   plotFunc(km,yearColor,text='D',legendPos='topright')
@@ -210,7 +222,7 @@ customXtable(table(info$fate,year(info$deployDate)))
 @
 }
 
-  \caption{Kaplan-Meier curves showing the estimated proportion of tags remaining on turtles. Maximum depth, constant depth and scheduled released are counted as censored observations.}
+  \caption{Kaplan-Meier curves showing the estimated proportion of tags remaining on turtles for all turtles (A), turtles split by tagging by an observer or a fisherman (B), turtles split by tagging year (C) and turtles split by tag type (D). Note that tagging year and tag type are highly correlated with the majority of tags in 2012 being PAT, in 2014 being SPLASH and 2015 being MinPat. A single tag deployed in 2011 is not shown in (C). Maximum depth, constant depth and scheduled released are counted as censored observations (crosses).}
   \label{figDrop}
 \end{figure}
 
@@ -251,7 +263,7 @@ customXtable(table(info$fate,year(info$deployDate)))
   text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days after deployment',,xpd=NA,cex=2,adj=c(.5,0))
 @
 }
-  \caption{Minimum and maximum depth reports for all turtles in the study}
+  \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study.}
   \label{figMinMax}
 \end{figure}
 
@@ -303,7 +315,7 @@ customXtable(table(info$fate,year(info$deployDate)))
   text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days before tag release',,xpd=NA,cex=2,adj=c(.5,0))
 @
 }
-  \caption{Minimum and maximum depth reports for all turtles in the study in the month prior to release}
+  \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study in the month prior to release. Dashed line indicates inferred release time. The inferred fate for each turtle based on its tag's communications and depth profiles is indicated for each subplot. Note the log scaling on the y-axis.}
   \label{figRelease}
 \end{figure}
 
