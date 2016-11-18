@@ -185,11 +185,13 @@ info$fate[is.na(info$fate)]<-'Unknown'
   
 info$realRelease<-sapply(info$ptt,function(x,surfaceDepth=10){
   thisRelease<-info[x,'releaseDays']
-  thisDepths<-minMaxDepth[minMaxDepth$Ptt==x & minMaxDepth$deployDay<thisRelease & minMaxDepth$deployDay>thisRelease-20 &!is.na(minMaxDepth$max),c('deployDay','max')]
+  thisRelease<-ifelse(is.na(thisRelease),Inf,thisRelease)
+  thisDepths<-minMaxDepth[minMaxDepth$Ptt==x & minMaxDepth$deployDay<thisRelease & !is.na(minMaxDepth$max),c('deployDay','max')]
   thisDepths[max(c(1,which(thisDepths$max>surfaceDepth))),'deployDay']
 },surfaceDepth)
 info$lastDay<-info$realRelease
-info[info$fate %in% c('StillOn','Lost'),'lastDay']<-sapply(info[info$fate %in% c('StillOn','Lost'),'ptt'],function(x)max(c(0,minMaxDepth[minMaxDepth$Ptt==x,'deployDay'])))
+info$lastDay[is.na(info$lastDay)]<-0
+#info[info$fate %in% c('StillOn','Lost'),'lastDay']<-sapply(info[info$fate %in% c('StillOn','Lost'),'ptt'],function(x)max(c(0,minMaxDepth[minMaxDepth$Ptt==x,'deployDay'])))
 
 info$hook<-ifelse(grepl('Deep',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Deep',ifelse(grepl('Light',info$Lightly.or.Deeply.Hooked..based.on.pics.),'Light',ifelse(grepl('Not [hH]ooked',info$Lightly.or.Deeply.Hooked..based.on.pics.),'NoHook',NA)))
 info$hook[info$Lightly.or.Deeply.Hooked..based.on.pics.=='Unknown']<-NA
