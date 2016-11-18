@@ -96,9 +96,13 @@
   These data were then analyzed using R v3.3.2.
 
   Tags often transmitted for a long period after releasing from turtles
-  and the start of transmission could be delayed from the time of release.
+  and the start of transmission could be delayed from the time of release. 
+  To infer the final time when the data clearly indicated the tag was on the turtle,
+  data was censored back from the first time the tag indicated release
+  (or last transmission for lost tags)
+  to the last time point where the maximum depth exceeded 10 m.
 
-  Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate.
+  Turtle fate was determined based on the tag release condition with tag released due to extreme depth or constant depth counted as mortalities and all other releases counted as censored data where the turtle was apparently alive when the tag was released. A limitation of these data, is that there is little opportunity to identify a sudden mortality event, e.g. a large shark bite or propeller strike, which both kills the turtle and releases the tag. We believe that most premature releases are due to tag attachment failure due to a particularly release-prone batch of MinPat tags in 2014 (Fig. \ref{figDrop}C,D).
 
 
   Combined these tracking data cover
@@ -201,7 +205,7 @@
       yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
       names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
       km<-survfit(drop~obs,conf.type='log-log')
-      plotFunc(km,yearColor,text='B',legendPos='topright')
+      plotFunc(km,yearColor,text='B',legendPos='topright',ylab='Proportion on turtle')
       addConfInt(km,yearColor2,yearColor3,lty=2)
     @
     }\\
@@ -215,7 +219,7 @@
       #only single obs in 2011
       yearColor[names(yearColor)=='2011']<-yearColor2[names(yearColor2)=='2011']<-yearColor3[names(yearColor3)=='2011']<-NA
       km<-survfit(drop~years,conf.type='log-log')
-      plotFunc(km,yearColor,text='C',legendPos='topright')
+      plotFunc(km,yearColor,text='C',legendPos='topright',ylab='Proportion on turtle')
       addConfInt(km,yearColor2,yearColor3,lty=2)
     @
     } \subfloat{
@@ -227,7 +231,7 @@
       yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5)
       names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
       km<-survfit(drop~obs,conf.type='log-log')
-      plotFunc(km,yearColor,text='D',legendPos='topright')
+      plotFunc(km,yearColor,text='D',legendPos='topright',ylab='Proportion on turtle')
       addConfInt(km,yearColor2,yearColor3,lty=2)
     @
     }
