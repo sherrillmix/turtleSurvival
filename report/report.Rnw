@@ -72,7 +72,29 @@
     par(mar=c(2.6,3,.1,.1))
     if(!is.null(names(km$strata))&!is.null(names(col)))cols<-col[sub('^[^=]+=','',names(km$strata))]
     else cols<-col
-    plot(km,xlab='',ylab=ylab,conf.int=FALSE,mark.time=TRUE,mgp=c(2.1,.6,0),las=1,tcl=-.4,col=col,lwd=2)
+    if(is.null(names(cols)))names(cols)<-'___NONAMES___'
+    plot(1,1,ylim=c(0,1),xlim=c(0,max(km$time)*1.02),type='n',xlab='',ylab=ylab,mgp=c(2.1,.6,0),las=1,tcl=-.4,col=col,lwd=2,xaxs='i')
+    for(ii in names(cols)){
+      if(ii=='___NONAMES___'){
+        ids<-1:length(km$time)
+      }else{
+        strataPos<-grep(sprintf('=%s$',ii),names(km$strata))
+        ids<-sum(head(km$strata,strataPos-1))+1:km$strata[strataPos]
+      }
+      times<-km$time[ids]
+      surv<-km$surv[ids]
+      switches<-which(surv[-length(surv)]!=surv[-1])
+      times<-c(times,times[switches+1])
+      surv<-c(surv,surv[switches])
+      newOrder<-order(times,-surv)
+      times<-times[newOrder]
+      surv<-surv[newOrder]
+      lines(times,surv,col=cols[ii],lwd=2)
+      censorSelect<-km$n.censor[ids]>0
+      censorTimes<-rep(km$time[ids],as.numeric(censorSelect))
+      censorSurv<-rep(km$surv[ids],as.numeric(censorSelect))
+      segments(censorTimes,censorSurv-.015*km$n.censor[ids][censorSelect],censorTimes,censorSurv+.015*km$n.censor[ids][censorSelect],pch='|',col=cols[ii])
+    }
     title(xlab='Days after tagging',mgp=c(1.6,1,0))
     if(!is.null(names(col)))legend(legendPos,names(col)[!is.na(col)],col=col[!is.na(col)],lwd=2,bty='n')
     if(text!='')text(convertLineToUser(2.9,2),convertLineToUser(-.05,3),text,xpd=NA,adj=c(0,1),cex=1.5)
