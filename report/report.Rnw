@@ -18,306 +18,323 @@
 
 
 <<echo=FALSE>>=
-library(xtable)
-library(lubridate)
-library(survival)
-library(dnar)
-info<-read.csv('../out/info.csv',stringsAsFactors=FALSE)
-minMaxDepth<-read.csv('../out/minMaxDepth.csv',stringsAsFactors=FALSE)
-and<-function(x){
-  if(length(x)==1)return(x)
-  last2<-length(x)-1:0
-  x<-c(x[-last2],paste(x[last2],collapse=' and '))
-  paste(x,collapse=', ')
-}
-makeAlign <- function(xx) {
-  if(is.data.frame(xx))format <- ifelse(sapply(xx, is.numeric), "r", "l")
-  else format <- rep(ifelse(is.numeric(xx),'r','l'),ncol(xx))
-  sprintf('|%s|',paste(c("r", format), collapse = "|"))
-}
-customXtable <- function(xx, ...,printArgs=c()) do.call(print.xtable,c(list(xtable(xx, ..., align = makeAlign(xx)),add.to.row=list(list(-1),'\\rowcolor{gray!5!blue!10}'),size='\\rowcolors{2}{blue!5}{white}'),printArgs))
+  library(xtable)
+  library(lubridate)
+  library(survival)
+  library(dnar)
+  info<-read.csv('../out/info.csv',stringsAsFactors=FALSE)
+  minMaxDepth<-read.csv('../out/minMaxDepth.csv',stringsAsFactors=FALSE)
+  and<-function(x){
+    if(length(x)==1)return(x)
+    last2<-length(x)-1:0
+    x<-c(x[-last2],paste(x[last2],collapse=' and '))
+    paste(x,collapse=', ')
+  }
+  makeAlign <- function(xx) {
+    if(is.data.frame(xx))format <- ifelse(sapply(xx, is.numeric), "r", "l")
+    else format <- rep(ifelse(is.numeric(xx),'r','l'),ncol(xx))
+    sprintf('|%s|',paste(c("r", format), collapse = "|"))
+  }
+  customXtable <- function(xx, ...,printArgs=c()) do.call(print.xtable,c(list(xtable(xx, ..., align = makeAlign(xx)),add.to.row=list(list(-1),'\\rowcolor{gray!5!blue!10}'),size='\\rowcolors{2}{blue!5}{white}'),printArgs))
 
-addConfInt<-function(sf,cols,cols2=NA,...){
-  if(is.null(names(cols)))names(cols)<-'___NONAMES___'
-  if(is.null(names(cols2)))names(cols2)<-'___NONAMES___'
-  for(ii in names(cols)){
-    if(ii=='___NONAMES___'){
-      ids<-1:length(sf$time)
-    }else{
-      strataPos<-grep(sprintf('=%s$',ii),names(sf$strata))
-      ids<-sum(head(sf$strata,strataPos-1))+1:sf$strata[strataPos]
-    }
-    times<-sf$time[ids]
-    uppers<-sf$upper[ids]
-    lowers<-sf$lower[ids]
-    switches<-which(uppers[-length(uppers)]!=uppers[-1] | lowers[-length(lowers)]!=lowers[-1])
-    times<-c(times,times[switches+1])
-    uppers<-c(uppers,uppers[switches])
-    lowers<-c(lowers,lowers[switches])
-    lowers[is.na(lowers)]<-0
-    uppers[is.na(uppers)]<-0
-    newOrder<-order(times,-uppers,-lowers)
-    times<-times[newOrder]
-    uppers<-uppers[newOrder]
-    lowers<-lowers[newOrder]
-    polygon(c(times,rev(times)),c(uppers,rev(lowers)),col=cols[ii],border=NA,...)
-    if(!is.na(cols2[ii])){
-      lines(times,uppers,col=cols2[ii],...)
-      lines(times,lowers,col=cols2[ii],...)
+  addConfInt<-function(sf,cols,cols2=NA,...){
+    if(is.null(names(cols)))names(cols)<-'___NONAMES___'
+    if(is.null(names(cols2)))names(cols2)<-'___NONAMES___'
+    for(ii in names(cols)){
+      if(ii=='___NONAMES___'){
+        ids<-1:length(sf$time)
+      }else{
+        strataPos<-grep(sprintf('=%s$',ii),names(sf$strata))
+        ids<-sum(head(sf$strata,strataPos-1))+1:sf$strata[strataPos]
+      }
+      times<-sf$time[ids]
+      uppers<-sf$upper[ids]
+      lowers<-sf$lower[ids]
+      switches<-which(uppers[-length(uppers)]!=uppers[-1] | lowers[-length(lowers)]!=lowers[-1])
+      times<-c(times,times[switches+1])
+      uppers<-c(uppers,uppers[switches])
+      lowers<-c(lowers,lowers[switches])
+      lowers[is.na(lowers)]<-0
+      uppers[is.na(uppers)]<-0
+      newOrder<-order(times,-uppers,-lowers)
+      times<-times[newOrder]
+      uppers<-uppers[newOrder]
+      lowers<-lowers[newOrder]
+      polygon(c(times,rev(times)),c(uppers,rev(lowers)),col=cols[ii],border=NA,...)
+      if(!is.na(cols2[ii])){
+        lines(times,uppers,col=cols2[ii],...)
+        lines(times,lowers,col=cols2[ii],...)
+      }
     }
   }
-}
 
-plotFunc<-function(km,col='black',text='',ylab='Proportion surviving',legendPos='bottomright'){
-  par(mar=c(2.6,3,.1,.1))
-  if(!is.null(names(km$strata))&!is.null(names(col)))cols<-col[sub('^[^=]+=','',names(km$strata))]
-  else cols<-col
-  plot(km,xlab='',ylab=ylab,conf.int=FALSE,mark.time=TRUE,mgp=c(2.1,.6,0),las=1,tcl=-.4,col=col,lwd=2)
-  title(xlab='Days after tagging',mgp=c(1.6,1,0))
-  if(!is.null(names(col)))legend(legendPos,names(col)[!is.na(col)],col=col[!is.na(col)],lwd=2,bty='n')
-  if(text!='')text(convertLineToUser(2.9,2),convertLineToUser(-.05,3),text,xpd=NA,adj=c(0,1),cex=1.5)
-}
-
+  plotFunc<-function(km,col='black',text='',ylab='Proportion surviving',legendPos='bottomright'){
+    par(mar=c(2.6,3,.1,.1))
+    if(!is.null(names(km$strata))&!is.null(names(col)))cols<-col[sub('^[^=]+=','',names(km$strata))]
+    else cols<-col
+    plot(km,xlab='',ylab=ylab,conf.int=FALSE,mark.time=TRUE,mgp=c(2.1,.6,0),las=1,tcl=-.4,col=col,lwd=2)
+    title(xlab='Days after tagging',mgp=c(1.6,1,0))
+    if(!is.null(names(col)))legend(legendPos,names(col)[!is.na(col)],col=col[!is.na(col)],lwd=2,bty='n')
+    if(text!='')text(convertLineToUser(2.9,2),convertLineToUser(-.05,3),text,xpd=NA,adj=c(0,1),cex=1.5)
+  }
 @
+
 \section{Methods}
-Over the course of \Sexpr{length(unique(year(info$deployDate)))} tagging seasons,
-\Sexpr{nrow(info)} pop-up satellite archival tags were deployed
-by researchers, commercial fishermen and fishery observers. 
-Combined these tracking data cover
-\Sexpr{floor(sum(info$lastDay))} turtle-days (Figure \ref{figMinMax}).
-A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used (Table \ref{tabTagYear}).
+  Over the course of \Sexpr{length(unique(year(info$deployDate)))} tagging seasons,
+  \Sexpr{nrow(info)} pop-up satellite archival tags were deployed
+  by researchers, commercial fishermen and fishery observers. 
+  The tags were programmed to release after a set period
+  (between \Sexpr{paste(range(info$releasePlan),collapse='--')} days after deployment),
+  after a prolonged period (4--8 days) at a constant depth or
+  reaching a maximum depth threshold of 1700 meters.
 
-<<echo=FALSE,results=tex>>=
-customXtable(table(info$Tag.Type,year(info$deployDate)),caption="The types of tags deployed over the 4 tagging seasons",label='tabTagYear')
-@
+  <<echo=FALSE,results=tex>>=
+  customXtable(table(info$Tag.Type,year(info$deployDate)),caption="The types of tags deployed over the 4 tagging seasons",label='tabTagYear')
+  @
 
-Tag data was [[MIKE: DOWNLOADED FROM WC WEBSITE]] and processed using WC-DAP v3.0.369.
-Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate.
-The tags were programmed to release after a set period
-(between \Sexpr{paste(range(info$releasePlan),collapse='--')} days after deployment),
-after a prolonged period (4--8 days) at a constant depth or
-reaching a maximum depth threshold of 1700 meters [[MIKE: Did 2015 tags have this threshold? I don't see annotated anywhere?]].
+  Tag data was downloaded from Wildlife Computers and processed using WC-DAP v3.0.369.
+  These data were then analyzed using R v3.3.2.
+
+  Tags often transmitted for a long period after releasing from turtles
+  and the start of transmission could be delayed from the time of release.
+
+  Status messages and the minimum and maximum depths reported by WC-DAP were used to infer turtle fate.
+
+
+  Combined these tracking data cover
+  \Sexpr{floor(sum(info$lastDay))} turtle-days (Figure \ref{figMinMax}).
+  A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used (Table \ref{tabTagYear}).
+
+
+  The fate of a turtle was determined by 
 
 \section{Results}
-Turtle fate:
-<<echo=FALSE,results=tex>>=
-fate<-info[,c('ptt','hook','deployDate','observer','lastDay','fate')]
-fate$hook<-sub('NoHook','No Hook',info$hook)
-fate$observer<-sub('Observer','Observer/researcher',info$observer)
-fate$fate<-sub('(.+)([A-Z])',' \\1 \\2',fate$fate)
-colnames(fate)<-c('\\rowcolor{gray!5!blue!10}PTT','Hook','Deploy date','Deployer','Deploy length','Fate')
-customXtable(fate,printArgs=list(tabular.environment='longtable',include.rownames=FALSE,floating=FALSE,sanitize.colnames.function=function(x)x),caption="\\cellcolor{white}PTT tag IDs, hooking location, deployment date, deployment length and inferred fate for all turtles in the study",label='tabFate')
-@
+  Turtle fate:
+  <<echo=FALSE,results=tex>>=
+  fate<-info[,c('ptt','hook','deployDate','observer','lastDay','fate')]
+  fate$hook<-sub('NoHook','No Hook',info$hook)
+  fate$observer<-sub('Observer','Observer/researcher',info$observer)
+  fate$fate<-sub('(.+)([A-Z])',' \\1 \\2',fate$fate)
+  colnames(fate)<-c('\\rowcolor{gray!5!blue!10}PTT','Hook','Deploy date','Deployer','Deploy length','Fate')
+  customXtable(fate,printArgs=list(tabular.environment='longtable',include.rownames=FALSE,floating=FALSE,sanitize.colnames.function=function(x)x),caption="\\cellcolor{white}PTT tag IDs, hooking location, deployment date, deployment length and inferred fate for all turtles in the study",label='tabFate')
+  @
 
-<<echo=FALSE,results=tex>>=
-customXtable(table(info$fate,year(info$deployDate)))
-@
+  <<echo=FALSE,results=tex>>=
+  customXtable(table(info$fate,year(info$deployDate)))
+  @
 
-\begin{figure}
-\centering
-\subfloat{
-<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-  surv<-Surv(info$lastDay,info$fate %in% c('TooDeep','ConstantDepth'))
-  km<-survfit(surv~1,conf.type='log-log')
-  plotFunc(km,text='A')
-  addConfInt(km,'#00000011','#00000033',lty=2)
-@
-}\subfloat{
-<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-  hookColor<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=1)
-  hookColor2<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=.1)
-  hookColor3<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=.5)
-  info$hookFac<-factor(info$hook)
-  names(hookColor)<-names(hookColor2)<-names(hookColor3)<-levels(info$hookFac)
-  kmHook<-survfit(surv~hookFac,conf.type='log-log',data=info)
-  plotFunc(kmHook,hookColor,'B')
-  addConfInt(kmHook,hookColor2,hookColor3,lty=2)
-@
-} \\
-\subfloat{
-<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-  obsColor<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
-  obsColor2<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
-  obsColor3<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
-  info$obsFac<-factor(info$observer)
-  survHooked<-Surv(info$lastDay[info$hook!='NoHook'],info$fate[info$hook!='NoHook'] %in% c('TooDeep','ConstantDepth'))
-  kmObs<-survfit(survHooked~obsFac,conf.type='log-log',data=info[!is.na(info$observer)&info$hook!='NoHook',])
-  names(obsColor)<-names(obsColor2)<-names(obsColor3)<-levels(info$obsFac)
-  plotFunc(kmObs,obsColor,'C')
-  addConfInt(kmObs,obsColor2,obsColor3,lty=2)
-@
-} \subfloat{
-<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-  #info$longMono<-factor(ifelse(is.na(info$mono),NA,paste(info$hook,'hook',ifelse(info$mono>30,'Long mono','Short mono'))))
-  info$longMono<-factor(ifelse(info$mono>30,'Long mono','Short mono'))
-  nCol<-length(unique(info$longMono[!is.na(info$longMono)]))
-  monoColor<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=1,start=2,end=-2.5)
-  monoColor2<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=.1,start=2,end=-2.5)
-  monoColor3<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=.5,start=2,end=-2.5)
-  names(monoColor)<-names(monoColor2)<-names(monoColor3)<-levels(info$longMono)
-  survMono<-Surv(info$lastDay[!is.na(info$mono)],info$fate[!is.na(info$mono)] %in% c('TooDeep','ConstantDepth'))
-  kmMono<-survfit(survMono~longMono,conf.type='log-log',data=info[!is.na(info$mono),])
-  plotFunc(kmMono,monoColor,'D')
-  addConfInt(kmMono,monoColor2,monoColor3,lty=2)
-@
-}
-  \caption{
-    Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for all turtles (A);
-    deep, light or no hook turtles (B);
-    observer or fisherman tagged turtles (C)
-    and turtles with long ($>30$ cm) or short pieces of monofilament left attached to hooks (D).
-    Shaded regions indicate 95\% confidence intervals.
-    Lost tags, scheduled releases and tags prematurely released
-    without dives to maximum depth or a period of constant depth
-    are counted as censored observations (crosses).
-  }
-  \label{figKms} 
-\end{figure}
-\begin{figure}
-\centering
-\subfloat{
-<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-  drop<-Surv(info$lastDay,!info$fate %in% c('TooDeep','ConstantDepth','Scheduled'))
-  km<-survfit(drop~1,conf.type='log-log')
-  plotFunc(km,text='A',ylab='Proportion on turtle')
-  addConfInt(km,'#00000011','#00000033',lty=2)
-@
-
-}\subfloat{
-<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-  obs<-info$observer
-  yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
-  yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
-  yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
-  names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
-  km<-survfit(drop~obs,conf.type='log-log')
-  plotFunc(km,yearColor,text='B',legendPos='topright')
-  addConfInt(km,yearColor2,yearColor3,lty=2)
-@
-}\\
-\subfloat{
-<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-  years<-year(info$deployDate)
-  yearColor<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=1,start=.5,end=-2.5)
-  yearColor2<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=.5,end=-2.5)
-  yearColor3<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=.5,end=-2.5)
-  names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(years)
-  #only single obs in 2011
-  yearColor[names(yearColor)=='2011']<-yearColor2[names(yearColor2)=='2011']<-yearColor3[names(yearColor3)=='2011']<-NA
-  km<-survfit(drop~years,conf.type='log-log')
-  plotFunc(km,yearColor,text='C',legendPos='topright')
-  addConfInt(km,yearColor2,yearColor3,lty=2)
-@
-} \subfloat{
-<<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-  #this is convoluted with year. maybe combine
-  obs<-info$Tag.Type
-  yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1)
-  yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1)
-  yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5)
-  names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
-  km<-survfit(drop~obs,conf.type='log-log')
-  plotFunc(km,yearColor,text='D',legendPos='topright')
-  addConfInt(km,yearColor2,yearColor3,lty=2)
-@
-}
-
-  \caption{Kaplan-Meier curves showing the estimated proportion of tags remaining on turtles for all turtles (A), turtles split by tagging by an observer or a fisherman (B), turtles split by tagging year (C) and turtles split by tag type (D). Note that tagging year and tag type are highly correlated with the majority of tags in 2012 being PAT, in 2014 being SPLASH and 2015 being MinPat. A single tag deployed in 2011 is not shown in (C). Maximum depth, constant depth and scheduled released are counted as censored observations (crosses).}
-  \label{figDrop}
-\end{figure}
-
-
-\begin{figure}
-\centering
-\subfloat{
-<<echo=FALSE,fig=TRUE,width=7,height=8.5>>=
-  #max(c(minMaxDepth$min,minMaxDepth$max),na.rm=TRUE)+100,
-  ylim<-c(700,-150)
-  xlim<-c(-40,max(minMaxDepth$deployDay)+20)
-  uniqTurtles<-sort(unique(minMaxDepth$Ptt))
-  nTurtle<-length(uniqTurtles)
-  nRow<-10
-  nCol<-ceiling(nTurtle/nRow)
-  #going to fill column wise below but want to fill row wise so invert nrow and ncol and t()
-  layoutMat<-matrix(0,ncol=nRow+2,nrow=nCol+2)
-  layoutMat[-c(1,nrow(layoutMat)),-c(1,ncol(layoutMat))]<-c(1:nTurtle,rep(0,nRow*nCol-nTurtle))
-  layoutMat<-t(layoutMat)
-  leftPlots<-apply(layoutMat,1,function(xx)min(c(xx[xx!=0],Inf),na.rm=TRUE))
-  bottomPlots<-apply(layoutMat,2,function(xx)max(c(xx[xx!=0],-Inf),na.rm=TRUE))
-  layout(layoutMat,width=c(.7,rep(1,nCol),.1),height=c(.1,rep(1,nRow),.6))
-  par(mar=c(0,0,0,0))
-  prettyX<-pretty(xlim)
-  prettyY<-pretty(ylim)
-  for(ii in 1:nTurtle){
-    thisData<-minMaxDepth[minMaxDepth$Ptt==as.numeric(uniqTurtles[ii])&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-20,]
-    plot(1,1,type='n',xlim=xlim,ylim=ylim,xaxt='n',yaxt='n')
-    if(ii %in% bottomPlots)axis(1,prettyX)
-    else axis(1,prettyX,rep('',length(prettyX)),tcl=-.2)
-    if(ii %in% leftPlots)axis(2,prettyY,las=1) #logAxis(2,offset=-1,las=1,axisMin=1)
-    else axis(2,prettyY,rep('',length(prettyY)),tcl=-.2)
-    lines(thisData$deployDay,thisData$max,col='#FF000099')
-    lines(thisData$deployDay,thisData$min,col='#0000FF99')
-    mtext(uniqTurtles[ii],3,line=-1.2,cex=.7)
-  }
-  text(grconvertX(.001,'ndc','user'),grconvertY(.5,'ndc','user'),'Depth (m)',,xpd=NA,srt=90,cex=2,adj=c(.5,1))
-  text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days after deployment',,xpd=NA,cex=2,adj=c(.5,0))
-@
-}
-  \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study.}
-  \label{figMinMax}
-\end{figure}
-
-\begin{figure}
-\centering
-\subfloat{
-<<echo=FALSE,fig=TRUE,width=7,height=8.5>>=
-  #max(c(minMaxDepth$min,minMaxDepth$max),na.rm=TRUE)+100,
-  ylim<-c(3000,.05)
-  xlim<-c(-35,5)
-  uniqTurtles<-sort(unique(minMaxDepth$Ptt))
-  nTurtle<-length(uniqTurtles)
-  nRow<-10
-  nCol<-ceiling(nTurtle/nRow)
-  #going to fill column wise below but want to fill row wise so invert nrow and ncol and t()
-  layoutMat<-matrix(0,ncol=nRow+2,nrow=nCol+2)
-  layoutMat[-c(1,nrow(layoutMat)),-c(1,ncol(layoutMat))]<-c(1:nTurtle,rep(0,nRow*nCol-nTurtle))
-  layoutMat<-t(layoutMat)
-  leftPlots<-apply(layoutMat,1,function(xx)min(c(xx[xx!=0],Inf),na.rm=TRUE))
-  bottomPlots<-apply(layoutMat,2,function(xx)max(c(xx[xx!=0],-Inf),na.rm=TRUE))
-  layout(layoutMat,width=c(.7,rep(1,nCol),.1),height=c(.1,rep(1,nRow),.6))
-  par(mar=c(0,0,0,0))
-  prettyX<-pretty(xlim)
-  prettyY<-pretty(ylim)
-  for(ii in 1:nTurtle){
-    thisInfo<-info[info$PTTID==uniqTurtles[ii],]
-    thisData<-minMaxDepth[minMaxDepth$Ptt==as.numeric(uniqTurtles[ii])&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-20,]
-    thisData$dropDay<-thisData$deployDay-thisInfo$lastDay
-    plot(1,1,type='n',xlim=xlim,ylim=ylim,xaxt='n',yaxt='n',log='y')
-    if(ii %in% bottomPlots)axis(1,prettyX)
-    else axis(1,prettyX,rep('',length(prettyX)),tcl=-.2)
-    if(ii %in% leftPlots){
-      ticks<-logAxis(2,offset=-1,las=1,axisMin=1)
-      axis(2,1,0,las=1)
-    } else {
-      #depending on first plot generating ticks
-      axis(2,ticks$minor,rep('',length(ticks$minor)),tcl=-.2)
-      axis(2,ticks$major,rep('',length(ticks$major)))
+  \begin{figure}
+    \centering
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      surv<-Surv(info$lastDay,info$fate %in% c('TooDeep','ConstantDepth'))
+      km<-survfit(surv~1,conf.type='log-log')
+      plotFunc(km,text='A')
+      addConfInt(km,'#00000011','#00000033',lty=2)
+    @
+    }\subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      hookColor<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=1)
+      hookColor2<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=.1)
+      hookColor3<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=.5)
+      info$hookFac<-factor(info$hook)
+      names(hookColor)<-names(hookColor2)<-names(hookColor3)<-levels(info$hookFac)
+      kmHook<-survfit(surv~hookFac,conf.type='log-log',data=info)
+      plotFunc(kmHook,hookColor,'B')
+      addConfInt(kmHook,hookColor2,hookColor3,lty=2)
+    @
+    } \\
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      obsColor<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
+      obsColor2<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
+      obsColor3<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+      info$obsFac<-factor(info$observer)
+      survHooked<-Surv(info$lastDay[info$hook!='NoHook'],info$fate[info$hook!='NoHook'] %in% c('TooDeep','ConstantDepth'))
+      kmObs<-survfit(survHooked~obsFac,conf.type='log-log',data=info[!is.na(info$observer)&info$hook!='NoHook',])
+      names(obsColor)<-names(obsColor2)<-names(obsColor3)<-levels(info$obsFac)
+      plotFunc(kmObs,obsColor,'C')
+      addConfInt(kmObs,obsColor2,obsColor3,lty=2)
+    @
+    } \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      #info$longMono<-factor(ifelse(is.na(info$mono),NA,paste(info$hook,'hook',ifelse(info$mono>30,'Long mono','Short mono'))))
+      info$longMono<-factor(ifelse(info$mono>30,'Long mono','Short mono'))
+      nCol<-length(unique(info$longMono[!is.na(info$longMono)]))
+      monoColor<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=1,start=2,end=-2.5)
+      monoColor2<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=.1,start=2,end=-2.5)
+      monoColor3<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=.5,start=2,end=-2.5)
+      names(monoColor)<-names(monoColor2)<-names(monoColor3)<-levels(info$longMono)
+      survMono<-Surv(info$lastDay[!is.na(info$mono)],info$fate[!is.na(info$mono)] %in% c('TooDeep','ConstantDepth'))
+      kmMono<-survfit(survMono~longMono,conf.type='log-log',data=info[!is.na(info$mono),])
+      plotFunc(kmMono,monoColor,'D')
+      addConfInt(kmMono,monoColor2,monoColor3,lty=2)
+    @
     }
-    lines(thisData$dropDay,thisData$max+1,col='#FF000099')
-    lines(thisData$dropDay,thisData$min+1,col='#0000FF99')
-    points(thisData$dropDay,thisData$max+1,col='#FF000033',cex=.5)
-    points(thisData$dropDay,thisData$min+1,col='#0000FF33',cex=.5)
-    mtext(uniqTurtles[ii],3,line=-1.1,cex=.6)#,at=mean(xlim)-10)
-    mtext(thisInfo$fate,3,line=-1.7,cex=.6)#,at=mean(xlim)-10+strwidth('MMMM',cex=.6),adj=0)
-    abline(v=0,lty=2,col='#00000055')
-  }
-  text(grconvertX(.001,'ndc','user'),grconvertY(.5,'ndc','user'),'Depth (m)',,xpd=NA,srt=90,cex=2,adj=c(.5,1))
-  text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days before tag release',,xpd=NA,cex=2,adj=c(.5,0))
-@
-}
-  \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study in the month prior to release. Dashed line indicates inferred release time. The inferred fate for each turtle based on its tag's communications and depth profiles is indicated for each subplot. Note the log scaling on the y-axis.}
-  \label{figRelease}
-\end{figure}
+    \caption{
+      Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for all turtles (A),
+      deep, light or no hook turtles (B),
+      observer or fisherman tagged turtles (C)
+      and turtles with long ($>30$ cm) or short pieces of monofilament left attached to hooks (D).
+      Shaded regions indicate 95\% confidence intervals.
+      Lost tags, scheduled releases and tags prematurely released
+      without dives to maximum depth or a period of constant depth
+      are counted as censored observations (crosses).
+    }
+    \label{figKms} 
+  \end{figure}
+
+  \begin{figure}
+    \centering
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      drop<-Surv(info$lastDay,!info$fate %in% c('TooDeep','ConstantDepth','Scheduled'))
+      km<-survfit(drop~1,conf.type='log-log')
+      plotFunc(km,text='A',ylab='Proportion on turtle')
+      addConfInt(km,'#00000011','#00000033',lty=2)
+    @
+    }\subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      obs<-info$observer
+      yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
+      yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
+      yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
+      km<-survfit(drop~obs,conf.type='log-log')
+      plotFunc(km,yearColor,text='B',legendPos='topright')
+      addConfInt(km,yearColor2,yearColor3,lty=2)
+    @
+    }\\
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      years<-year(info$deployDate)
+      yearColor<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=1,start=.5,end=-2.5)
+      yearColor2<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=.5,end=-2.5)
+      yearColor3<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=.5,end=-2.5)
+      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(years)
+      #only single obs in 2011
+      yearColor[names(yearColor)=='2011']<-yearColor2[names(yearColor2)=='2011']<-yearColor3[names(yearColor3)=='2011']<-NA
+      km<-survfit(drop~years,conf.type='log-log')
+      plotFunc(km,yearColor,text='C',legendPos='topright')
+      addConfInt(km,yearColor2,yearColor3,lty=2)
+    @
+    } \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      #this is convoluted with year. maybe combine
+      obs<-info$Tag.Type
+      yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1)
+      yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1)
+      yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5)
+      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
+      km<-survfit(drop~obs,conf.type='log-log')
+      plotFunc(km,yearColor,text='D',legendPos='topright')
+      addConfInt(km,yearColor2,yearColor3,lty=2)
+    @
+    }
+    \caption{
+      Kaplan-Meier curves showing the estimated proportion of tags remaining on turtles for all turtles (A),
+      turtles split by tagging by an observer/researcher or a fisherman (B),
+      turtles split by tagging year (C)
+      and turtles split by tag type (D). 
+      Note that tagging year and tag type are highly correlated (Table \ref{tabTagYear}.
+      A single tag deployed in 2011 is not shown in (C).
+      Maximum depth, constant depth and scheduled released are counted as censored observations (crosses).
+    }
+    \label{figDrop}
+  \end{figure}
+
+
+  \begin{figure}
+    \centering
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=7,height=8.5>>=
+      #max(c(minMaxDepth$min,minMaxDepth$max),na.rm=TRUE)+100,
+      ylim<-c(700,-150)
+      xlim<-c(-40,max(minMaxDepth$deployDay)+20)
+      uniqTurtles<-sort(unique(minMaxDepth$Ptt))
+      nTurtle<-length(uniqTurtles)
+      nRow<-10
+      nCol<-ceiling(nTurtle/nRow)
+      #going to fill column wise below but want to fill row wise so invert nrow and ncol and t()
+      layoutMat<-matrix(0,ncol=nRow+2,nrow=nCol+2)
+      layoutMat[-c(1,nrow(layoutMat)),-c(1,ncol(layoutMat))]<-c(1:nTurtle,rep(0,nRow*nCol-nTurtle))
+      layoutMat<-t(layoutMat)
+      leftPlots<-apply(layoutMat,1,function(xx)min(c(xx[xx!=0],Inf),na.rm=TRUE))
+      bottomPlots<-apply(layoutMat,2,function(xx)max(c(xx[xx!=0],-Inf),na.rm=TRUE))
+      layout(layoutMat,width=c(.7,rep(1,nCol),.1),height=c(.1,rep(1,nRow),.6))
+      par(mar=c(0,0,0,0))
+      prettyX<-pretty(xlim)
+      prettyY<-pretty(ylim)
+      for(ii in 1:nTurtle){
+        thisData<-minMaxDepth[minMaxDepth$Ptt==as.numeric(uniqTurtles[ii])&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-20,]
+        plot(1,1,type='n',xlim=xlim,ylim=ylim,xaxt='n',yaxt='n')
+        if(ii %in% bottomPlots)axis(1,prettyX)
+        else axis(1,prettyX,rep('',length(prettyX)),tcl=-.2)
+        if(ii %in% leftPlots)axis(2,prettyY,las=1) #logAxis(2,offset=-1,las=1,axisMin=1)
+        else axis(2,prettyY,rep('',length(prettyY)),tcl=-.2)
+        lines(thisData$deployDay,thisData$max,col='#FF000099')
+        lines(thisData$deployDay,thisData$min,col='#0000FF99')
+        mtext(uniqTurtles[ii],3,line=-1.2,cex=.7)
+      }
+      text(grconvertX(.001,'ndc','user'),grconvertY(.5,'ndc','user'),'Depth (m)',,xpd=NA,srt=90,cex=2,adj=c(.5,1))
+      text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days after deployment',,xpd=NA,cex=2,adj=c(.5,0))
+    @
+    }
+      \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study.}
+      \label{figMinMax}
+    \end{figure}
+
+    \begin{figure}
+    \centering
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=7,height=8.5>>=
+      #max(c(minMaxDepth$min,minMaxDepth$max),na.rm=TRUE)+100,
+      ylim<-c(3000,.05)
+      xlim<-c(-35,5)
+      uniqTurtles<-sort(unique(minMaxDepth$Ptt))
+      nTurtle<-length(uniqTurtles)
+      nRow<-10
+      nCol<-ceiling(nTurtle/nRow)
+      #going to fill column wise below but want to fill row wise so invert nrow and ncol and t()
+      layoutMat<-matrix(0,ncol=nRow+2,nrow=nCol+2)
+      layoutMat[-c(1,nrow(layoutMat)),-c(1,ncol(layoutMat))]<-c(1:nTurtle,rep(0,nRow*nCol-nTurtle))
+      layoutMat<-t(layoutMat)
+      leftPlots<-apply(layoutMat,1,function(xx)min(c(xx[xx!=0],Inf),na.rm=TRUE))
+      bottomPlots<-apply(layoutMat,2,function(xx)max(c(xx[xx!=0],-Inf),na.rm=TRUE))
+      layout(layoutMat,width=c(.7,rep(1,nCol),.1),height=c(.1,rep(1,nRow),.6))
+      par(mar=c(0,0,0,0))
+      prettyX<-pretty(xlim)
+      prettyY<-pretty(ylim)
+      for(ii in 1:nTurtle){
+        thisInfo<-info[info$PTTID==uniqTurtles[ii],]
+        thisData<-minMaxDepth[minMaxDepth$Ptt==as.numeric(uniqTurtles[ii])&!is.na(minMaxDepth$min)&!is.na(minMaxDepth$max)&minMaxDepth$deployDay>-20,]
+        thisData$dropDay<-thisData$deployDay-thisInfo$lastDay
+        plot(1,1,type='n',xlim=xlim,ylim=ylim,xaxt='n',yaxt='n',log='y')
+        if(ii %in% bottomPlots)axis(1,prettyX)
+        else axis(1,prettyX,rep('',length(prettyX)),tcl=-.2)
+        if(ii %in% leftPlots){
+          ticks<-logAxis(2,offset=-1,las=1,axisMin=1)
+          axis(2,1,0,las=1)
+        } else {
+          #depending on first plot generating ticks
+          axis(2,ticks$minor,rep('',length(ticks$minor)),tcl=-.2)
+          axis(2,ticks$major,rep('',length(ticks$major)))
+        }
+        lines(thisData$dropDay,thisData$max+1,col='#FF000099')
+        lines(thisData$dropDay,thisData$min+1,col='#0000FF99')
+        points(thisData$dropDay,thisData$max+1,col='#FF000033',cex=.5)
+        points(thisData$dropDay,thisData$min+1,col='#0000FF33',cex=.5)
+        mtext(uniqTurtles[ii],3,line=-1.1,cex=.6)#,at=mean(xlim)-10)
+        mtext(thisInfo$fate,3,line=-1.7,cex=.6)#,at=mean(xlim)-10+strwidth('MMMM',cex=.6),adj=0)
+        abline(v=0,lty=2,col='#00000055')
+      }
+      text(grconvertX(.001,'ndc','user'),grconvertY(.5,'ndc','user'),'Depth (m)',,xpd=NA,srt=90,cex=2,adj=c(.5,1))
+      text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days before tag release',,xpd=NA,cex=2,adj=c(.5,0))
+    @
+    }
+    \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study in the month prior to release. Dashed line indicates inferred release time. The inferred fate for each turtle based on its tag's communications and depth profiles is indicated for each subplot. Note the log scaling on the y-axis.}
+    \label{figRelease}
+  \end{figure}
 
 
 
