@@ -252,7 +252,7 @@
     } \subfloat{
     <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
       #this is convoluted with year. maybe combine
-      obs<-info$Tag.Type
+      obs<-sub(' 323-B','',info$Tag.Type)
       yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1)
       yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1)
       yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5)
