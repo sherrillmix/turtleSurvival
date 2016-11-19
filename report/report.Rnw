@@ -119,16 +119,23 @@
 
   Tags often transmitted for a long period after releasing from turtles
   and the start of transmission could be delayed from the time of release. 
-  To infer the final time when the data clearly indicated the tag was on the turtle,
+  To infer the final time that the tag was clearly on the turtle,
   data was censored back from the first time the tag indicated release
   (or last transmission for lost tags)
   to the last time point where the maximum depth exceeded 10 m.
+  Based on these last dates, these data provide
+  \Sexpr{format(floor(sum(info$lastDay)),big.mark=',')} turtle-days of tracking (Figure \ref{figMinMax}).
 
-  Turtle fate was determined based on the tag release condition with tag released due to extreme depth or constant depth counted as mortalities and all other releases counted as censored data where the turtle was apparently alive when the tag was released. A limitation of these data, is that there is little opportunity to identify a sudden mortality event, e.g. a large shark bite or propeller strike, which both kills the turtle and releases the tag. We believe that most premature releases are due to tag attachment failure due to a particularly release-prone batch of MinPat tags in 2014 (Fig. \ref{figDrop}C,D).
+  Turtle fate was determined based on the tag release condition.
+  Tags released due to extreme depth or constant depth were counted as mortalities
+  and all other releases counted as a turtle which was alive at the time of release.
+  A limitation with all such data is that there is little opportunity to identify a sudden mortality event,
+  e.g. a large shark bite or propeller strike,
+  which both kills the turtle and releases the tag.
+  We believe that most premature releases are due to tag attachment failure as exemplified
+  in a particularly release-prone batch of MinPat tags in 2014 (Fig. \ref{figDrop}C,D).
 
 
-  Combined these tracking data cover
-  \Sexpr{floor(sum(info$lastDay))} turtle-days (Figure \ref{figMinMax}).
   A range of Wildlife Computing \Sexpr{and(unique(info$Tag.Type))} tags were used (Table \ref{tabTagYear}).
 
 
