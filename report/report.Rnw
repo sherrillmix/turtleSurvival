@@ -150,9 +150,12 @@
   We estimated survival rates using Kaplan-Meier estimates and compared between conditions using Cox proportional hazards models.
 
 \section*{Results}
-  Over the \Sexpr{length(unique(year(info$deployDate)))} tagging-seasons, tags were deployed on \Sexpr{nrow(info)} turtles and
-  \Sexpr{format(floor(sum(info$lastDay)),big.mark=',')} turtle-days of tracking data was collected
+  Over the \Sexpr{length(unique(year(info$deployDate)))} tagging-seasons, tags were deployed on \Sexpr{nrow(info)} turtles
+  with tags covering \Sexpr{format(floor(sum(info$lastDay)),big.mark=',')} turtle-days
   (Figure \ref{figMinMax}, Table \ref{tabFate}).
+  We observed \Sexpr{sum(info$fate %in% c('TooDeep','ConstantDepth'))} inferred mortalilities,
+  \Sexpr{sum(info$fate=='TooDeep')} inferred from maximum depth dives and
+  \Sexpr{sum(info$fate=='ConstantDepth')} from constant depth.
 
   \begin{figure}
     \centering
