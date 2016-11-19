@@ -111,7 +111,7 @@
 \section*{Methods}
   Over the course of \Sexpr{length(unique(year(info$deployDate)))} tagging seasons,
   \Sexpr{nrow(info)} pop-up satellite archival tags were deployed
-  by researchers, commercial fishermen and fishery observers. 
+  by researchers, commercial fishermen and fishery observers.
   The tags were programmed to release after a set period
   (between \Sexpr{paste(range(info$releasePlan),collapse='--')} days after deployment),
   after a prolonged period (4--8 days) at a constant depth or
@@ -126,22 +126,19 @@
   These data were then analyzed using R v3.3.2.
 
   Tags often transmitted for a long period after releasing from turtles
-  and the start of transmission could be delayed from the time of release. 
+  and the start of transmission could be delayed from the time of release.
   To infer the final time that the tag was clearly on the turtle,
   data was censored back from the first time the tag indicated release
   (or last transmission for lost tags)
   to the last time point where the maximum depth exceeded 10 m.
-  Based on these dates, the tagging data provide
-  \Sexpr{format(floor(sum(info$lastDay)),big.mark=',')} turtle-days of tracking
-  (Figure \ref{figMinMax}, Table \ref{tabFate}).
 
   Turtle fate was determined based on the tag release condition.
   Tags released due to extreme depth or constant depth were counted as mortalities
-  and all other releases counted as a turtle which was alive at the time of release.
+  and all other releases counted as a turtle which was alive at the time of release (Figure \ref{figRelease}.
   A limitation with all such data is that there is little opportunity to identify a sudden mortality event,
   e.g. a large shark bite or propeller strike,
   which both kills the turtle and releases the tag.
-  We believe that most premature releases and tag losses are due to tag or attachment failure
+  However, we believe that most premature releases and tag losses are due to tag or attachment failure
   as exemplified in a particularly loss-prone batch of PAT tags in 2012
   and release-prone SPLASH tags in 2014 (Table \ref{tabFateYear}).
 
@@ -149,132 +146,13 @@
   customXtable(table(info$fate,year(info$deployDate)), caption="Inferred fate of tags deployed over the 4 tagging seasons",label='tabFateYear')
   @
 
+  %\citep{Kaplan1958}
+  We estimated survival rates using Kaplan-Meier estimates and compared between conditions using Cox proportional hazards models.
 
 \section*{Results}
-
-
-  \begin{figure}
-    \centering
-    \subfloat{
-    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-      surv<-Surv(info$lastDay,info$fate %in% c('TooDeep','ConstantDepth'))
-      km<-survfit(surv~1,conf.type='log-log')
-      plotFunc(km,text='A')
-      addConfInt(km,'#00000011','#00000033',lty=2)
-    @
-    }\subfloat{
-    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-      hookColor<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=1)
-      hookColor2<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=.1)
-      hookColor3<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=.5)
-      info$hookFac<-factor(info$hook)
-      names(hookColor)<-names(hookColor2)<-names(hookColor3)<-levels(info$hookFac)
-      kmHook<-survfit(surv~hookFac,conf.type='log-log',data=info)
-      plotFunc(kmHook,hookColor,'B')
-      addConfInt(kmHook,hookColor2,hookColor3,lty=2)
-    @
-    } \\
-    \subfloat{
-    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-      obsColor<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
-      obsColor2<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
-      obsColor3<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
-      info$obsFac<-factor(info$observer)
-      survHooked<-Surv(info$lastDay[info$hook!='NoHook'],info$fate[info$hook!='NoHook'] %in% c('TooDeep','ConstantDepth'))
-      kmObs<-survfit(survHooked~obsFac,conf.type='log-log',data=info[!is.na(info$observer)&info$hook!='NoHook',])
-      names(obsColor)<-names(obsColor2)<-names(obsColor3)<-levels(info$obsFac)
-      plotFunc(kmObs,obsColor,'C')
-      addConfInt(kmObs,obsColor2,obsColor3,lty=2)
-    @
-    } \subfloat{
-    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-      #info$longMono<-factor(ifelse(is.na(info$mono),NA,paste(info$hook,'hook',ifelse(info$mono>30,'Long mono','Short mono'))))
-      info$longMono<-factor(ifelse(info$mono>30,'Long mono','Short mono'))
-      nCol<-length(unique(info$longMono[!is.na(info$longMono)]))
-      monoColor<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=1,start=2,end=-2.5)
-      monoColor2<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=.1,start=2,end=-2.5)
-      monoColor3<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=.5,start=2,end=-2.5)
-      names(monoColor)<-names(monoColor2)<-names(monoColor3)<-levels(info$longMono)
-      survMono<-Surv(info$lastDay[!is.na(info$mono)],info$fate[!is.na(info$mono)] %in% c('TooDeep','ConstantDepth'))
-      kmMono<-survfit(survMono~longMono,conf.type='log-log',data=info[!is.na(info$mono),])
-      plotFunc(kmMono,monoColor,'D')
-      addConfInt(kmMono,monoColor2,monoColor3,lty=2)
-    @
-    }
-    \caption{
-      Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for all turtles (A),
-      deep, light or no hook turtles (B),
-      observer or fisherman tagged turtles (C)
-      and turtles with long ($>30$ cm) or short pieces of monofilament left attached to hooks (D).
-      Shaded regions indicate 95\% confidence intervals.
-      Lost tags, scheduled releases and tags prematurely released
-      without dives to maximum depth or a period of constant depth
-      are counted as censored observations
-      (vertical dashes, scaled by the number of tags censored on that day).
-    }
-    \label{figKms} 
-  \end{figure}
-
-  \begin{figure}
-    \centering
-    \subfloat{
-    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-      drop<-Surv(info$lastDay,!info$fate %in% c('TooDeep','ConstantDepth','Scheduled'))
-      km<-survfit(drop~1,conf.type='log-log')
-      plotFunc(km,text='A',ylab='Proportion on turtle')
-      addConfInt(km,'#00000011','#00000033',lty=2)
-    @
-    }\subfloat{
-    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-      obs<-info$observer
-      yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
-      yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
-      yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
-      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
-      km<-survfit(drop~obs,conf.type='log-log')
-      plotFunc(km,yearColor,text='B',legendPos='topright',ylab='Proportion on turtle')
-      addConfInt(km,yearColor2,yearColor3,lty=2)
-    @
-    }\\
-    \subfloat{
-    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-      years<-year(info$deployDate)
-      yearColor<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=1,start=.5,end=-2.5)
-      yearColor2<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=.5,end=-2.5)
-      yearColor3<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=.5,end=-2.5)
-      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(years)
-      #only single obs in 2011
-      yearColor[names(yearColor)=='2011']<-yearColor2[names(yearColor2)=='2011']<-yearColor3[names(yearColor3)=='2011']<-NA
-      km<-survfit(drop~years,conf.type='log-log')
-      plotFunc(km,yearColor,text='C',legendPos='topright',ylab='Proportion on turtle')
-      addConfInt(km,yearColor2,yearColor3,lty=2)
-    @
-    } \subfloat{
-    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
-      #this is convoluted with year. maybe combine
-      obs<-sub(' 323-B','',info$Tag.Type)
-      yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1)
-      yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1)
-      yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5)
-      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
-      km<-survfit(drop~obs,conf.type='log-log')
-      plotFunc(km,yearColor,text='D',legendPos='topright',ylab='Proportion on turtle')
-      addConfInt(km,yearColor2,yearColor3,lty=2)
-    @
-    }
-    \caption{
-      Kaplan-Meier curves showing the estimated proportion of tags remaining on turtles for all turtles (A),
-      turtles split by tagging by an observer/researcher or a fisherman (B),
-      turtles split by tagging year (C)
-      and turtles split by tag type (D). 
-      Note that tagging year and tag type are highly correlated (Table \ref{tabTagYear}.
-      A single tag deployed in 2011 is not shown in (C).
-      Maximum depth, constant depth and scheduled released are counted as censored observations
-      (vertical dashes, scaled by the number of tags censored on that day).
-    }
-    \label{figDrop}
-  \end{figure}
-
+  Over the \Sexpr{length(unique(year(info$deployDate)))} tagging-seasons, tags were deployed on \Sexpr{nrow(info)} turtles and
+  \Sexpr{format(floor(sum(info$lastDay)),big.mark=',')} turtle-days of tracking data was collected
+  (Figure \ref{figMinMax}, Table \ref{tabFate}).
 
   \begin{figure}
     \centering
@@ -367,6 +245,130 @@
     \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study in the month prior to release. Dashed line indicates inferred release time. The inferred fate for each turtle based on its tag's communications and depth profiles is indicated for each subplot. Note the log scaling on the y-axis.}
     \label{figRelease}
   \end{figure}
+
+
+  \begin{figure}
+    \centering
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      surv<-Surv(info$lastDay,info$fate %in% c('TooDeep','ConstantDepth'))
+      km<-survfit(surv~1,conf.type='log-log')
+      plotFunc(km,text='A')
+      addConfInt(km,'#00000011','#00000033',lty=2)
+    @
+    }\subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      hookColor<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=1)
+      hookColor2<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=.1)
+      hookColor3<-rainbow.lab(length(unique(na.omit(info$hook))),lightScale=0,lightMultiple=.7,alpha=.5)
+      info$hookFac<-factor(info$hook)
+      names(hookColor)<-names(hookColor2)<-names(hookColor3)<-levels(info$hookFac)
+      kmHook<-survfit(surv~hookFac,conf.type='log-log',data=info)
+      plotFunc(kmHook,hookColor,'B')
+      addConfInt(kmHook,hookColor2,hookColor3,lty=2)
+    @
+    } \\
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      obsColor<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
+      obsColor2<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
+      obsColor3<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+      info$obsFac<-factor(info$observer)
+      survHooked<-Surv(info$lastDay[info$hook!='NoHook'],info$fate[info$hook!='NoHook'] %in% c('TooDeep','ConstantDepth'))
+      kmObs<-survfit(survHooked~obsFac,conf.type='log-log',data=info[!is.na(info$observer)&info$hook!='NoHook',])
+      names(obsColor)<-names(obsColor2)<-names(obsColor3)<-levels(info$obsFac)
+      plotFunc(kmObs,obsColor,'C')
+      addConfInt(kmObs,obsColor2,obsColor3,lty=2)
+    @
+    } \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      #info$longMono<-factor(ifelse(is.na(info$mono),NA,paste(info$hook,'hook',ifelse(info$mono>30,'Long mono','Short mono'))))
+      info$longMono<-factor(ifelse(info$mono>30,'Long mono','Short mono'))
+      nCol<-length(unique(info$longMono[!is.na(info$longMono)]))
+      monoColor<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=1,start=2,end=-2.5)
+      monoColor2<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=.1,start=2,end=-2.5)
+      monoColor3<-rainbow.lab(nCol,lightScale=0,lightMultiple=.7,alpha=.5,start=2,end=-2.5)
+      names(monoColor)<-names(monoColor2)<-names(monoColor3)<-levels(info$longMono)
+      survMono<-Surv(info$lastDay[!is.na(info$mono)],info$fate[!is.na(info$mono)] %in% c('TooDeep','ConstantDepth'))
+      kmMono<-survfit(survMono~longMono,conf.type='log-log',data=info[!is.na(info$mono),])
+      plotFunc(kmMono,monoColor,'D')
+      addConfInt(kmMono,monoColor2,monoColor3,lty=2)
+    @
+    }
+    \caption{
+      Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for all turtles (A),
+      deep, light or no hook turtles (B),
+      observer or fisherman tagged turtles (C)
+      and turtles with long ($>30$ cm) or short pieces of monofilament left attached to hooks (D).
+      Shaded regions indicate 95\% confidence intervals.
+      Lost tags, scheduled releases and tags prematurely released
+      without dives to maximum depth or a period of constant depth
+      are counted as censored observations
+      (vertical dashes, scaled by the number of tags censored on that day).
+    }
+    \label{figKms}
+  \end{figure}
+
+  \begin{figure}
+    \centering
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      drop<-Surv(info$lastDay,!info$fate %in% c('TooDeep','ConstantDepth','Scheduled'))
+      km<-survfit(drop~1,conf.type='log-log')
+      plotFunc(km,text='A',ylab='Proportion on turtle')
+      addConfInt(km,'#00000011','#00000033',lty=2)
+    @
+    }\subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      obs<-info$observer
+      yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
+      yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
+      yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
+      km<-survfit(drop~obs,conf.type='log-log')
+      plotFunc(km,yearColor,text='B',legendPos='topright',ylab='Proportion on turtle')
+      addConfInt(km,yearColor2,yearColor3,lty=2)
+    @
+    }\\
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      years<-year(info$deployDate)
+      yearColor<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=1,start=.5,end=-2.5)
+      yearColor2<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=.5,end=-2.5)
+      yearColor3<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=.5,end=-2.5)
+      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(years)
+      #only single obs in 2011
+      yearColor[names(yearColor)=='2011']<-yearColor2[names(yearColor2)=='2011']<-yearColor3[names(yearColor3)=='2011']<-NA
+      km<-survfit(drop~years,conf.type='log-log')
+      plotFunc(km,yearColor,text='C',legendPos='topright',ylab='Proportion on turtle')
+      addConfInt(km,yearColor2,yearColor3,lty=2)
+    @
+    } \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      #this is convoluted with year. maybe combine
+      obs<-sub(' 323-B','',info$Tag.Type)
+      yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1)
+      yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1)
+      yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5)
+      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
+      km<-survfit(drop~obs,conf.type='log-log')
+      plotFunc(km,yearColor,text='D',legendPos='topright',ylab='Proportion on turtle')
+      addConfInt(km,yearColor2,yearColor3,lty=2)
+    @
+    }
+    \caption{
+      Kaplan-Meier curves showing the estimated proportion of tags remaining on turtles for all turtles (A),
+      turtles split by tagging by an observer/researcher or a fisherman (B),
+      turtles split by tagging year (C)
+      and turtles split by tag type (D).
+      Note that tagging year and tag type are highly correlated (Table \ref{tabTagYear}.
+      A single tag deployed in 2011 is not shown in (C).
+      Maximum depth, constant depth and scheduled released are counted as censored observations
+      (vertical dashes, scaled by the number of tags censored on that day).
+    }
+    \label{figDrop}
+  \end{figure}
+
 
 
 
