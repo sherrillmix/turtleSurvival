@@ -157,7 +157,7 @@
   \Sexpr{sum(info$fate=='TooDeep')} inferred from maximum depth dives and
   \Sexpr{sum(info$fate=='ConstantDepth')} from constant depth (Figure \ref{figRelease}).
 
-  %figMixMax
+  %figMinMax
   \begin{figure}
     \centering
     \subfloat{
@@ -240,7 +240,7 @@
         points(thisData$dropDay,thisData$max+1,col='#FF000033',cex=.5)
         points(thisData$dropDay,thisData$min+1,col='#0000FF33',cex=.5)
         mtext(uniqTurtles[ii],3,line=-1.1,cex=.6)#,at=mean(xlim)-10)
-        mtext(thisInfo$fate,3,line=-1.7,cex=.6)#,at=mean(xlim)-10+strwidth('MMMM',cex=.6),adj=0)
+        mtext(thisInfo$fate,3,line=-1.7,cex=.6,font=ifelse(thisInfo$fate %in% c('TooDeep','ConstantDepth'),2,1))
         abline(v=0,lty=2,col='#00000055')
       }
       text(grconvertX(.001,'ndc','user'),grconvertY(.5,'ndc','user'),'Depth (m)',,xpd=NA,srt=90,cex=2,adj=c(.5,1))
