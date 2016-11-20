@@ -151,12 +151,13 @@
 
 \section*{Results}
   Over the \Sexpr{length(unique(year(info$deployDate)))} tagging-seasons, tags were deployed on \Sexpr{nrow(info)} turtles
-  with tags covering \Sexpr{format(floor(sum(info$lastDay)),big.mark=',')} turtle-days
+  giving \Sexpr{format(floor(sum(info$lastDay)),big.mark=',')} turtle-days of information
   (Figure \ref{figMinMax}, Table \ref{tabFate}).
   We observed \Sexpr{sum(info$fate %in% c('TooDeep','ConstantDepth'))} inferred mortalilities,
   \Sexpr{sum(info$fate=='TooDeep')} inferred from maximum depth dives and
-  \Sexpr{sum(info$fate=='ConstantDepth')} from constant depth.
+  \Sexpr{sum(info$fate=='ConstantDepth')} from constant depth (Figure \ref{figRelease}).
 
+  %figMixMax
   \begin{figure}
     \centering
     \subfloat{
@@ -193,11 +194,12 @@
       text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days after deployment',,xpd=NA,cex=2,adj=c(.5,0))
     @
     }
-      \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study.}
-      \label{figMinMax}
-    \end{figure}
+    \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study.}
+    \label{figMinMax}
+  \end{figure}
 
-    \begin{figure}
+  %figRelease
+  \begin{figure}
     \centering
     \subfloat{
     <<echo=FALSE,fig=TRUE,width=7,height=8.5>>=
@@ -250,6 +252,7 @@
   \end{figure}
 
 
+  %figKms
   \begin{figure}
     \centering
     \subfloat{
@@ -269,6 +272,7 @@
       kmHook<-survfit(surv~hookFac,conf.type='log-log',data=info)
       plotFunc(kmHook,hookColor,'B')
       addConfInt(kmHook,hookColor2,hookColor3,lty=2)
+      coxHook<-coxph(surv[info$hookFac %in% c('Light','Deep'),]~hook,data=info[info$hook %in% c('Light','Deep'),])
     @
     } \\
     \subfloat{
@@ -277,11 +281,12 @@
       obsColor2<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
       obsColor3<-rainbow.lab(2,lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
       info$obsFac<-factor(info$observer)
-      survHooked<-Surv(info$lastDay[info$hook!='NoHook'],info$fate[info$hook!='NoHook'] %in% c('TooDeep','ConstantDepth'))
-      kmObs<-survfit(survHooked~obsFac,conf.type='log-log',data=info[!is.na(info$observer)&info$hook!='NoHook',])
+      survHooked<-Surv(info$lastDay,info$fate %in% c('TooDeep','ConstantDepth'))
+      kmObs<-survfit(survHooked~obsFac,conf.type='log-log',data=info[!is.na(info$observer),])
       names(obsColor)<-names(obsColor2)<-names(obsColor3)<-levels(info$obsFac)
       plotFunc(kmObs,obsColor,'C')
       addConfInt(kmObs,obsColor2,obsColor3,lty=2)
+      coxObs<-coxph(survHooked~obsFac,data=info[!is.na(info$observer),])
     @
     } \subfloat{
     <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
@@ -312,6 +317,26 @@
     \label{figKms}
   \end{figure}
 
+  Over all the data, \Sexpr{round(summary(km,time=30)$surv*100,1)}\%
+  (95\% confidence interval (CI): \Sexpr{round(summary(km,time=30)$lower*100,1)}--%
+  \Sexpr{round(summary(km,time=30)$upper*100,1)}\%)
+  of turtles survived at least 30 days after tagging,
+  \Sexpr{round(summary(km,time=90)$surv*100,1)}\%
+  (95\% CI: \Sexpr{round(summary(km,time=90)$lower*100,1)}--%
+  \Sexpr{round(summary(km,time=90)$upper*100,1)}\%) of turtles survived at least 90 days after tagging and
+  \Sexpr{round(summary(km,time=365)$surv*100,1)}\%
+  (95\% CI: \Sexpr{round(summary(km,time=365)$lower*100,1)}--%
+  \Sexpr{round(summary(km,time=365)$upper*100,1)}\%) of turtles survived at least 365 days after tagging (Figure \ref{figKms}A).
+
+  Hooking location did not appear to have a significant effect on mortalities
+  (Cox proportional hazard model: $p=\Sexpr{round(coef(summary(coxHook))[,'Pr(>|z|)'],2)}$).
+  No mortalities were observed in turtles captured without hooking (Figure \ref{figKms}B).
+
+  Turtle selection and tagging by either observer/researcher or fishing boat crew did not have a significant effect on mortality
+  ($p=\Sexpr{round(coef(summary(coxObs))[,'Pr(>|z|)'],2)}$)
+  (Figure \ref{figKms}C).
+
+  %figDrop
   \begin{figure}
     \centering
     \subfloat{
