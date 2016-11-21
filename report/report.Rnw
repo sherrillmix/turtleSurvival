@@ -301,6 +301,7 @@
       kmMono<-survfit(survMono~longMono,conf.type='log-log',data=info[!is.na(info$mono),])
       plotFunc(kmMono,monoColor,'D')
       addConfInt(kmMono,monoColor2,monoColor3,lty=2)
+      #coxMono<-coxph(survMono~longMono,data=info[!is.na(info$mono),])
     @
     }
     \caption{
