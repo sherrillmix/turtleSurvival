@@ -5,14 +5,23 @@
 \usepackage[table]{xcolor}
 \usepackage{subfig}
 \usepackage[nogin]{Sweave}
+\usepackage{natbib}
+\bibliographystyle{apalike}
 
-%http://tex.stackexchange.com/questions/128844/put-subfigure-labels-inside-figures-using-subfig-package
-\newcommand{\subfigimg}[2][,]{%
-  \setbox1=\hbox{#2}% Store image in box
-  \leavevmode\rlap{\usebox1}% Print image
-  \rlap{\hspace*{10pt}\raisebox{\dimexpr\ht1-2\baselineskip}{#1}}% Print label
-  \phantom{\usebox1}% Insert appropriate spcing
-}
+
+%http://tex.stackexchange.com/questions/162821/box-around-caption-in-figure
+\makeatletter
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{\color{gray!5!blue!10}\fbox{\color{black}#1: #2}}%
+  \ifdim \wd\@tempboxa >\hsize
+    \color{gray!5!blue!10}\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{\color{black}#1: #2}}\par
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+\makeatother
 
 \newcommand{\beginSupplement}{%
   \setcounter{table}{0}
@@ -146,17 +155,16 @@
   customXtable(table(info$fate,year(info$deployDate)), caption="Inferred fate of tags deployed over the 4 tagging seasons",label='tabFateYear')
   @
 
-  %\citep{Kaplan1958}
-  We estimated survival rates using Kaplan-Meier estimates and compared between conditions using Cox proportional hazards models.
+  We estimated survival rates using Kaplan-Meier estimates \citep{Kaplan1958} and compared between conditions using Cox proportional hazards models \citep{Cox1972}.
 
 \section*{Results}
+  \subsection*{Mortalities}
   Over the \Sexpr{length(unique(year(info$deployDate)))} tagging-seasons, tags were deployed on \Sexpr{nrow(info)} turtles
   giving \Sexpr{format(floor(sum(info$lastDay)),big.mark=',')} turtle-days of information
   (Figure \ref{figMinMax}, Table \ref{tabFate}).
   We observed \Sexpr{sum(info$fate %in% c('TooDeep','ConstantDepth'))} inferred mortalilities,
   \Sexpr{sum(info$fate=='TooDeep')} inferred from maximum depth dives and
   \Sexpr{sum(info$fate=='ConstantDepth')} from constant depth (Figure \ref{figRelease}).
-
   %figMinMax
   \begin{figure}
     \centering
@@ -326,10 +334,13 @@
   of turtles survived at least 30 days after tagging,
   \Sexpr{round(summary(km,time=90)$surv*100,1)}\%
   (95\% CI: \Sexpr{round(summary(km,time=90)$lower*100,1)}--%
-  \Sexpr{round(summary(km,time=90)$upper*100,1)}\%) of turtles survived at least 90 days after tagging and
+  \Sexpr{round(summary(km,time=90)$upper*100,1)}\%)
+  of turtles survived at least 90 days after tagging and
   \Sexpr{round(summary(km,time=365)$surv*100,1)}\%
   (95\% CI: \Sexpr{round(summary(km,time=365)$lower*100,1)}--%
-  \Sexpr{round(summary(km,time=365)$upper*100,1)}\%) of turtles survived at least 365 days after tagging (Figure \ref{figKms}A).
+  \Sexpr{round(summary(km,time=365)$upper*100,1)}\%)
+  of turtles survived at least 365 days after tagging
+  (Figure \ref{figKms}A).
 
   Hooking location did not appear to have a significant effect on mortalities
   (Cox proportional hazards model score test:
@@ -350,52 +361,57 @@
   ($p=\Sexpr{round(summary(coxMono)$sctest['pvalue'],2)}$).
 
 
+  \subsection*{Tag failures}
   %figDrop
   \begin{figure}
     \centering
     \subfloat{
     <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
       drop<-Surv(info$lastDay,!info$fate %in% c('TooDeep','ConstantDepth','Scheduled'))
-      km<-survfit(drop~1,conf.type='log-log')
-      plotFunc(km,text='A',ylab='Proportion on turtle')
-      addConfInt(km,'#00000011','#00000033',lty=2)
+      dropKm<-survfit(drop~1,conf.type='log-log')
+      plotFunc(dropKm,text='A',ylab='Proportion on turtle')
+      addConfInt(dropKm,'#00000011','#00000033',lty=2)
     @
     }\subfloat{
     <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
       obs<-info$observer
-      yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
-      yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
-      yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
-      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
-      km<-survfit(drop~obs,conf.type='log-log')
-      plotFunc(km,yearColor,text='B',legendPos='topright',ylab='Proportion on turtle')
-      addConfInt(km,yearColor2,yearColor3,lty=2)
+      obsColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1,start=1,end=-1)
+      obsColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1,start=1,end=-1)
+      obsColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5,start=1,end=-1)
+      names(obsColor)<-names(obsColor2)<-names(obsColor3)<-unique(obs)
+      dropKmObs<-survfit(drop~obs,conf.type='log-log')
+      plotFunc(dropKmObs,obsColor,text='B',legendPos='topright',ylab='Proportion on turtle')
+      addConfInt(dropKmObs,obsColor2,obsColor3,lty=2)
+      coxDropObs<-coxph(drop~obs)
     @
     }\\
     \subfloat{
     <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
       years<-year(info$deployDate)
-      yearColor<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=1,start=.5,end=-2.5)
-      yearColor2<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=.5,end=-2.5)
-      yearColor3<-rainbow.lab(length(unique(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=.5,end=-2.5)
-      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(years)
       #only single obs in 2011
-      yearColor[names(yearColor)=='2011']<-yearColor2[names(yearColor2)=='2011']<-yearColor3[names(yearColor3)=='2011']<-NA
-      km<-survfit(drop~years,conf.type='log-log')
-      plotFunc(km,yearColor,text='C',legendPos='topright',ylab='Proportion on turtle')
-      addConfInt(km,yearColor2,yearColor3,lty=2)
+      years<-factor(years,levels=unique(years[years!=2011])[order(unique(years[years!=2011])!=2012)])
+      yearColor<-rainbow.lab(length(levels(years)),lightScale=0,lightMultiple=.7,alpha=1,start=.5,end=-2.5)
+      yearColor2<-rainbow.lab(length(levels(years)),lightScale=0,lightMultiple=.7,alpha=.1,start=.5,end=-2.5)
+      yearColor3<-rainbow.lab(length(levels(years)),lightScale=0,lightMultiple=.7,alpha=.5,start=.5,end=-2.5)
+      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-levels(years)
+      dropKmYear<-survfit(drop~years,conf.type='log-log')
+      plotFunc(dropKmYear,yearColor,text='C',legendPos='topright',ylab='Proportion on turtle')
+      addConfInt(dropKmYear,yearColor2,yearColor3,lty=2)
+      coxDropYear<-coxph(drop~years)
     @
     } \subfloat{
     <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
       #this is convoluted with year. maybe combine
-      obs<-sub(' 323-B','',info$Tag.Type)
-      yearColor<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=1)
-      yearColor2<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.1)
-      yearColor3<-rainbow.lab(length(unique(obs)),lightScale=0,lightMultiple=.7,alpha=.5)
-      names(yearColor)<-names(yearColor2)<-names(yearColor3)<-unique(obs)
-      km<-survfit(drop~obs,conf.type='log-log')
-      plotFunc(km,yearColor,text='D',legendPos='topright',ylab='Proportion on turtle')
-      addConfInt(km,yearColor2,yearColor3,lty=2)
+      types<-sub(' 323-B','',info$Tag.Type)
+      types<-factor(types,levels=unique(types)[order(unique(types)!='PAT')])
+      typeColor<-rainbow.lab(length(unique(types)),lightScale=0,lightMultiple=.7,alpha=1)
+      typeColor2<-rainbow.lab(length(unique(types)),lightScale=0,lightMultiple=.7,alpha=.1)
+      typeColor3<-rainbow.lab(length(unique(types)),lightScale=0,lightMultiple=.7,alpha=.5)
+      names(typeColor)<-names(typeColor2)<-names(typeColor3)<-unique(types)
+      dropKmType<-survfit(drop~types,conf.type='log-log')
+      plotFunc(dropKmType,typeColor,text='D',legendPos='topright',ylab='Proportion on turtle')
+      addConfInt(dropKmType,typeColor2,typeColor3,lty=2)
+      coxDropType<-coxph(drop~types)
     @
     }
     \caption{
@@ -411,12 +427,79 @@
     \label{figDrop}
   \end{figure}
 
+  There were several difficulties in tag retention in this study.
+  Over all the data, \Sexpr{round(100-summary(dropKm,time=30)$surv*100,1)}\%
+  (95\% CI: \Sexpr{round(100-summary(dropKm,time=30)$upper*100,1)}--%
+  \Sexpr{round(100-summary(dropKm,time=30)$lower*100,1)}\%)
+  of tags detached or failed within 30 days of tagging.
+  Further, \Sexpr{round(100-summary(dropKm,time=150)$surv*100,1)}\%
+  (95\% CI: \Sexpr{round(100-summary(dropKm,time=150)$upper*100,1)}--%
+  \Sexpr{round(100-summary(dropKm,time=150)$lower*100,1)}\%)
+  of tags detached or failed within 150 days of tagging and
+  only \Sexpr{round(summary(dropKm,time=360)$surv*100,1)}\%
+  (95\% CI: \Sexpr{round(summary(dropKm,time=360)$lower*100,1)}--%
+  \Sexpr{round(summary(dropKm,time=360)$upper*100,1)}\%)
+  lasted to 360 days
+  (Figure \ref{figDrop}A).
+
+  Turtle selection and tagging by either observer/researcher or fishing boat crew
+  did not have a significant effect on tag drop rate
+  ($p=\Sexpr{round(summary(coxDropObs)$sctest['pvalue'],2)}$)
+  (Figure \ref{figDrop}B).
+
+  Tag type and tagging year were highly correlated (Table \ref{tabTagYear}) so precisely defining which variable is affecting performance is difficult but SPLASH tags deployed in 2014 had a very high failure rate (Figure \ref{figDrop}CD).
 
 
+  %figLost
+  \begin{figure}
+    \centering
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      lost<-Surv(info$lastTransmit,info$fate =='Lost')
+      lostKm<-survfit(lost~1,conf.type='log-log')
+      plotFunc(lostKm,text='A',ylab='Proportion functioning tags')
+      addConfInt(lostKm,'#00000011','#00000033',lty=2)
+    @
+    }
+    \subfloat{
+    <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+      #this is convoluted with year. maybe combine
+      lostKmType<-survfit(lost~types,conf.type='log-log')
+      plotFunc(lostKmType,typeColor,text='B',legendPos='topright',ylab='Proportion functioning tags')
+      addConfInt(lostKmType,typeColor2,typeColor3,lty=2)
+      coxLostType<-coxph(lost~types)
+    @
+    }
+    \caption{
+      Kaplan-Meier curves showing the estimated proportion of tags not lost for all turtles (A)
+      and turtles split by tag type (B).
+      All fates other than tag loss are counted as censored observations
+      (vertical dashes, scaled by the number of tags censored on that day).
+      Tags were considered lost on the last day a status message was received.
+    }
+    \label{figLost}
+  \end{figure}
 
-
+  Complete tag loss with no terminal transmission of archived data is a particular problem for PAT tags.
+  Here, we did not receive terminal transmissions from \Sexpr{sum(info$fate=='Lost')} tags (Figure \ref{figLost}A).
+  These losses were largely from PAT type tags (Figure \ref{figLost}B)
+  but the rate of loss was not significantly different between tag types
+  ($p=\Sexpr{round(summary(coxLostType)$sctest['pvalue'],2)}$).
 
 \section*{Conclusions}
+
+In this population of turtles, the mortality rate after hooking appears relatively low.
+We estimate that
+\Sexpr{round(summary(km,time=150)$surv*100,1)}\%
+of turtles survive at least 150 days after tagging.
+The survival rate does not appear to be related to the location of the hook in the turtle.
+The data hints that there could be an association between mortalities and
+monofilament clipped at shorter lengths but no conclusions can be drawn from the current data.
+Since censored observations do not contribute to the statistical power to detect differential mortality \citep{Hsieh2000},
+the low mortality rates observed in this study suggest that
+further tagging is necessary if we wish to determine variables correlated with mortality.
+
+\bibliography{refs}
 
 \section*{Supplementary}
   \beginSupplement
