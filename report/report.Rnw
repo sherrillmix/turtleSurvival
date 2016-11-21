@@ -273,6 +273,8 @@
       plotFunc(kmHook,hookColor,'B')
       addConfInt(kmHook,hookColor2,hookColor3,lty=2)
       coxHook<-coxph(surv[info$hookFac %in% c('Light','Deep'),]~hook,data=info[info$hook %in% c('Light','Deep'),])
+      info$noHook<-info$hook=='NoHook'
+      coxNoHook<-coxph(surv~noHook,data=info)
     @
     } \\
     \subfloat{
@@ -301,7 +303,7 @@
       kmMono<-survfit(survMono~longMono,conf.type='log-log',data=info[!is.na(info$mono),])
       plotFunc(kmMono,monoColor,'D')
       addConfInt(kmMono,monoColor2,monoColor3,lty=2)
-      #coxMono<-coxph(survMono~longMono,data=info[!is.na(info$mono),])
+      coxMono<-coxph(survMono~longMono,data=info[!is.na(info$mono),])
     @
     }
     \caption{
@@ -330,12 +332,23 @@
   \Sexpr{round(summary(km,time=365)$upper*100,1)}\%) of turtles survived at least 365 days after tagging (Figure \ref{figKms}A).
 
   Hooking location did not appear to have a significant effect on mortalities
-  (Cox proportional hazard model: $p=\Sexpr{round(coef(summary(coxHook))[,'Pr(>|z|)'],2)}$).
-  No mortalities were observed in turtles captured without hooking (Figure \ref{figKms}B).
+  (Cox proportional hazards model score test:
+  $p=\Sexpr{round(summary(coxHook)$sctest['pvalue'],2)}$).
+  No mortalities were observed in turtles captured without hooking (Figure \ref{figKms}B)
+  but with only \Sexpr{sum(info$hook=='NoHook',na.rm=TRUE)} unhooked turtles, this difference did not reach significance
+  ($p=\Sexpr{round(summary(coxNoHook)$sctest['pvalue'],2)}$).
 
   Turtle selection and tagging by either observer/researcher or fishing boat crew did not have a significant effect on mortality
-  ($p=\Sexpr{round(coef(summary(coxObs))[,'Pr(>|z|)'],2)}$)
+  ($p=\Sexpr{round(summary(coxObs)$sctest['pvalue'],2)}$)
   (Figure \ref{figKms}C).
+
+  There were hints that the length of monofilament left on the hook could have an effect on mortality,
+  with shorter lengths potentially linked to mortality (Figure \ref{figKms}D).
+  However, the length of monofilament was known for only
+  \Sexpr{sum(!is.na(info$mono))} turtles
+  and the difference was not significant
+  ($p=\Sexpr{round(summary(coxMono)$sctest['pvalue'],2)}$).
+
 
   %figDrop
   \begin{figure}
