@@ -182,11 +182,18 @@ info$fate[is.na(info$fate)]<-sapply(info$ptt[is.na(info$fate)],function(x,surfac
 },surfaceDepth)
 #unknown
 info$fate[is.na(info$fate)]<-'Unknown'
-  
+
+info$lastTransmit<-sapply(info$ptt,function(x){
+  thisRelease<-info[x,'releaseDays']
+  if(!is.na(thisRelease))return(thisRelease)
+  thisDates<-statusData[statusData$Ptt==x,'deployDay']
+  max(c(0,thisDates))
+})
+ 
 info$realRelease<-sapply(info$ptt,function(x,surfaceDepth=10){
   thisRelease<-info[x,'releaseDays']
   thisRelease<-ifelse(is.na(thisRelease),Inf,thisRelease)
-  thisDepths<-minMaxDepth[minMaxDepth$Ptt==x & minMaxDepth$deployDay<thisRelease & !is.na(minMaxDepth$max),c('deployDay','max')]
+  thisDepths<-minMaxDepth[minMaxDepth$Ptt==x & minMaxDepth$deployDay<=thisRelease & !is.na(minMaxDepth$max),c('deployDay','max')]
   thisDepths[max(c(1,which(thisDepths$max>surfaceDepth))),'deployDay']
 },surfaceDepth)
 info$lastDay<-info$realRelease
