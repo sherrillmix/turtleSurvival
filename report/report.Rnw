@@ -448,14 +448,19 @@
     (Figure \ref{figDrop}B).
 
     Tag type and tagging year were highly correlated (Table \ref{tabTagYear})
-    so precisely defining which variable is affecting performance is difficult
+    so precisely defining which variables might be affecting performance is difficult
     but SPLASH tags deployed in 2014 had a very high drop off rate
     (Figure \ref{figDrop}C, \ref{figDrop}D). SPLASH tags had a
     \Sexpr{round(sum(dropKmType['types=SPLASH',]$n.event)/dropKmType['types=SPLASH',]$n*100,1)}\%
     failure rate with
     \Sexpr{round(100-summary(dropKmType,time=30)$surv[names(dropKmType$strata)=='types=SPLASH']*100,1)}\%
     (95\% CI: \Sexpr{round(100-summary(dropKmType,time=30)$upper[names(dropKmType$strata)=='types=SPLASH']*100,1)}--%
-    \Sexpr{round(100-summary(dropKmType,time=30)$lower[names(dropKmType$strata)=='types=SPLASH']*100,1)}\%) of SPLASH tags failing within 30 days of deployment.
+    \Sexpr{round(100-summary(dropKmType,time=30)$lower[names(dropKmType$strata)=='types=SPLASH']*100,1)}\%)
+    of tags failing within 30 days of deployment.
+    These SPLASH tags had a failure rate
+    \Sexpr{round(exp(summary(coxDropType)$coef['typesSPLASH','coef']),1)}
+    (95\% CI: \Sexpr{paste(round(exp(summary(coxDropType)$coef['typesSPLASH','coef']+ c(-1.96,1.96)*summary(coxDropType)$coef['typesSPLASH','se(coef)']),1),collapse='--')})
+    times higher than PAT tags.
 
     %figLost
     \begin{figure}
