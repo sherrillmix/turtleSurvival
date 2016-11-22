@@ -143,7 +143,7 @@
 
   Turtle fate was determined based on the tag release condition.
   Tags released due to extreme depth or constant depth were counted as mortalities
-  and all other releases counted as a turtle which was alive at the time of release (Figure \ref{figRelease}.
+  and all other releases counted as a turtle which was alive at the time of release (Figure \ref{figRelease}).
   A limitation with all such data is that there is little opportunity to identify a sudden mortality event,
   e.g. a large shark bite or propeller strike,
   which both kills the turtle and releases the tag.
@@ -155,7 +155,7 @@
   customXtable(table(info$fate,year(info$deployDate)), caption="Inferred fate of tags deployed over the 4 tagging seasons",label='tabFateYear')
   @
 
-  We estimated survival rates using Kaplan-Meier estimates \citep{Kaplan1958} and compared between conditions using Cox proportional hazards models \citep{Cox1972}.
+  We estimated survival rates using Kaplan-Meier estimates \citep{Kaplan1958} and compared between conditions using Cox proportional hazards models \citep{Cox1972}. These methods make no assumptions about the fate of turtles without inferred mortalities. Scheduled release, lost tags or dropped tags are all treated as information that the turtle was alive at the last observation but that no further data is available.
 
 \section*{Results}
   \subsection*{Mortalities}
@@ -202,7 +202,7 @@
         text(grconvertX(.5,'ndc','user'),grconvertY(.005,'ndc','user'),'Days after deployment',,xpd=NA,cex=2,adj=c(.5,0))
       @
       }
-      \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study.}
+      \caption{Minimum (blue) and maximum (red) depth reports extracted from all available tag sensors for all turtles with any records in the study. Note that some dives extend beyond the range of the plot.}
       \label{figMinMax}
     \end{figure}
 
@@ -498,6 +498,78 @@
     but the rate of loss was not significantly different between tag types
     ($p=\Sexpr{round(summary(coxLostType)$sctest['pvalue'],2)}$).
 
+  \subsection*{Comparison with other studies}
+    %figCompare
+    \begin{figure}
+      \centering
+      \subfloat{
+      <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+        source('../readOthers.R',chdir=TRUE)
+        combineData<-rbind(
+          cbind('time'=info$lastDay,'mortality'=info$fate %in% c('TooDeep','ConstantDepth')),
+          sasso[,c('time','mortality')],
+          swimmer[,c('time','mortality')]
+        )
+        study<-as.factor(rep(c('James','Sasso','Swimmer'),c(nrow(info),nrow(sasso),nrow(swimmer))))
+        studyColor<-rainbow.lab(length(unique(study)),lightScale=0,lightMultiple=.7,alpha=1)
+        studyColor2<-rainbow.lab(length(unique(study)),lightScale=0,lightMultiple=.7,alpha=.1)
+        studyColor3<-rainbow.lab(length(unique(study)),lightScale=0,lightMultiple=.7,alpha=.5)
+        names(studyColor)<-names(studyColor2)<-names(studyColor3)<-unique(study)
+        comboSurv<-Surv(combineData[,'time'],combineData[,'mortality']==1)
+        kmStudy<-survfit(comboSurv~study,conf.type='log-log')
+        plotFunc(kmStudy,studyColor,text='A')
+        addConfInt(kmStudy,studyColor2,studyColor3,lty=2)
+        coxStudy<-coxph(comboSurv~study)
+      @
+      }\subfloat{
+      <<echo=FALSE,fig=TRUE,width=3.2,height=3.2>>=
+        studyHook<-paste(as.character(study),ifelse(c(info$hook=='Deep',sasso$isDeep,swimmer$isDeep),'Deep','Other'))
+        studyHook[grepl('NA',studyHook)]<-NA
+        studyHook<-as.factor(studyHook)
+        studyHookColor<-rainbow.lab(length(levels(studyHook)),lightScale=0,lightMultiple=.7,alpha=1)
+        studyHookColor2<-rainbow.lab(length(levels(studyHook)),lightScale=0,lightMultiple=.7,alpha=.1)
+        studyHookColor3<-rainbow.lab(length(levels(studyHook)),lightScale=0,lightMultiple=.7,alpha=.5)
+        names(studyHookColor)<-names(studyHookColor2)<-names(studyHookColor3)<-levels(studyHook)
+        kmStudyHook<-survfit(comboSurv~studyHook,conf.type='log-log')
+        plotFunc(kmStudyHook,studyHookColor,text='B')
+        addConfInt(kmStudyHook,studyHookColor2,studyHookColor3,lty=2)
+        coxStudyHook<-coxph(comboSurv~studyHook)
+      @
+      }
+      \caption{
+        Kaplan-Meier curves showing the estimated proportion of turtles surviving over time for
+        this study and data previously reported by \citet{Swimmer2013} and \citet{Sasso2007} (A)
+        and for those studies broken out by hooking location (deep vs. light/shallow/unhooked) (B).
+        Shaded regions indicate 95\% confidence intervals.
+        Lost tags, scheduled releases and tags prematurely released
+        without dives to maximum depth or a period of constant depth
+        are counted as censored observations in this study and \citep{Sasso2007}
+        (vertical dashes, scaled by the number of tags censored on that day).
+        The definition of a mortality differs in \citet{Swimmer2013}.
+      }
+      \label{figCompare}
+    \end{figure}
+
+    To compare with previous reports, we pulled mortality data from \citet{Sasso2007} and \citet{Swimmer2013}
+    and compared to the data reported here (Figure \ref{figCompare}A).
+    The data reported here and the data reported by \citet{Sasso2007}
+    appear to be in relative agreement about mortality rates with no significant differences.
+    However, the turtles reported by \citet{Swimmer2013} have an inferred mortality rate
+    \Sexpr{round(exp(summary(coxStudy)$coef['studySwimmer','coef']),1)}
+    (95\% CI: \Sexpr{paste(round(exp(summary(coxStudy)$coef['studySwimmer','coef']+ c(-1.96,1.96)*summary(coxStudy)$coef['studySwimmer','se(coef)']),1),collapse='--')})
+    times higher than those reported here.
+    This difference is largely driven by deeply hooked turtles in the \citet{Swimmer2013} data
+    (Figure \ref{figCompare}B)
+    with only deeply hooked \citep{Swimmer2013} turtles significantly different than any other group.
+
+    Unfortunately, differences in methodology make these results difficult to interpret.
+    \citet{Swimmer2013} count any moderately deep dive prior to premature tag release as a ``mortality''
+    and infer mortality in tags lost from deeply hooked turtles
+    even when no evidence of a mortality is present and
+    \citet{Sasso2007} count turtles which exhibit reduced diving
+    prior to tag release at the surface as mortality events.
+    Further research is necessary to determine the true fates of these turtles.
+
 \section*{Conclusions}
 
 In this population of turtles, the mortality rate after hooking appears relatively low.
@@ -509,7 +581,7 @@ The data hints that there could be an association between mortalities and
 monofilament clipped at shorter lengths but no conclusions can be drawn from the current data.
 Since censored observations do not contribute to the statistical power to detect differential mortality \citep{Hsieh2000},
 the low mortality rates observed in this study suggest that
-further tagging is necessary if we wish to determine variables correlated with mortality.
+further tagging is necessary if we wish to determine causes of mortality.
 
 \bibliography{refs}
 
