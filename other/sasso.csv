@@ -1,0 +1,27 @@
+patV,deployDate,progTime,time,hook,fate
+2,2 Sep 2001,316,316,"mouth, lower jaw",survived
+2,3 Sep 2001,315,315,"mouth, lower jaw",survived
+2,6 Sep 2001,329,137,flipper,unknown
+2,12 Sep 2001,323,203,beak,unknown
+2,25 Sep 2001,310,160,beak,unknown
+2,3 Oct 2001,302,302,flipper,survived
+2,18 Oct 2001,270,177,"mouth, lower jaw",died
+2,14 Aug 2002,284,10,beak,died
+2,6 Sep 2002,261,261,tongue,survived
+2,3 Oct 2002,234,,"mouth, side",no transmission
+2,7 Oct 2002,230,230,shoulder,survived
+2,12 Oct 2002,225,225,"mouth, side, not in joint",survived
+3,3 Sep 2003,365,365,"mouth, upper jaw",survived
+3,5 Oct 2003,45,45,flipper,survived
+4,13 Oct 2003,355,,flipper,no transmission
+3,27 Sep 2003,51,51,control,survived
+4,1 Oct 2003,365,305,control,unknown
+4,1 Oct 2003,365,67,control,died
+4,1 Oct 2003,365,,control,no transmission
+4,1 Oct 2003,365,,control,no transmission
+4,1 Oct 2003,365,365,control,survived
+4,1 Oct 2003,365,365,control,survived
+4,1 Oct 2003,365,365,control,survived
+4,1 Oct 2003,365,365,control,survived
+4,1 Oct 2003,365,365,control,survived
+,,,,,~           
