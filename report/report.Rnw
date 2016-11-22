@@ -419,7 +419,7 @@
         turtles split by tagging by an observer/researcher or a fisherman (B),
         turtles split by tagging year (C)
         and turtles split by tag type (D).
-        Note that tagging year and tag type are highly correlated (Table \ref{tabTagYear}.
+        Note that tagging year and tag type are highly correlated (Table \ref{tabTagYear}).
         A single tag deployed in 2011 is not shown in (C).
         Maximum depth, constant depth and scheduled released are counted as censored observations
         (vertical dashes, scaled by the number of tags censored on that day).
@@ -541,18 +541,18 @@
         this study and data previously reported by \citet{Swimmer2013} and \citet{Sasso2007} (A)
         and for those studies broken out by hooking location (deep vs. light/shallow/unhooked) (B).
         Shaded regions indicate 95\% confidence intervals.
-        Lost tags, scheduled releases and tags prematurely released
-        without dives to maximum depth or a period of constant depth
-        are counted as censored observations in this study and \citep{Sasso2007}
+        Lost and tags prematurely released
+        without inferred mortality
+        are counted as censored observations
         (vertical dashes, scaled by the number of tags censored on that day).
-        The definition of a mortality differs in \citet{Swimmer2013}.
+        The criteria for an inferred mortality differs between studies.
       }
       \label{figCompare}
     \end{figure}
 
     To compare with previous reports, we pulled mortality data from \citet{Sasso2007} and \citet{Swimmer2013}
     and compared to the data reported here (Figure \ref{figCompare}A).
-    The data reported here and the data reported by \citet{Sasso2007}
+    This study's data and the data reported by \citet{Sasso2007}
     appear to be in relative agreement about mortality rates with no significant differences.
     However, the turtles reported by \citet{Swimmer2013} have an inferred mortality rate
     \Sexpr{round(exp(summary(coxStudy)$coef['studySwimmer','coef']),1)}
@@ -560,7 +560,7 @@
     times higher than those reported here.
     This difference is largely driven by deeply hooked turtles in the \citet{Swimmer2013} data
     (Figure \ref{figCompare}B)
-    with only deeply hooked \citep{Swimmer2013} turtles significantly different than any other group.
+    with only deeply hooked \citet{Swimmer2013} turtles significantly different than any other group.
 
     Unfortunately, differences in methodology make these results difficult to interpret.
     \citet{Swimmer2013} count any moderately deep dive prior to premature tag release as a ``mortality''
